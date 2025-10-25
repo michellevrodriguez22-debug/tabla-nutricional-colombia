@@ -1,4 +1,4 @@
-# app.py (versión corregida con mejor formato de tabla y líneas completas)
+# app.py (versión corregida: columnas, negrillas en valores destacados, líneas verticales completas)
 import streamlit as st
 import pandas as pd
 from io import BytesIO
@@ -211,7 +211,7 @@ else:
     st.success("No requiere sellos frontales (evaluación indicativa).")
 
 # -------------------------
-# Generación de PDF (definitiva corregida)
+# Generación de PDF (definitiva)
 # -------------------------
 def generar_pdf(rows, no_signif_text, table_width_mm=100):
     page_w, page_h = A4
@@ -281,9 +281,9 @@ def generar_pdf(rows, no_signif_text, table_width_mm=100):
     c.setLineWidth(1)
     c.line(table_x + 3 * mm, y, table_x + table_w - 3 * mm, y)
 
-    # header labels (NOT bold - corregido según tu solicitud)
+    # header labels (not bold)
     y -= 8 * mm
-    c.setFont(f_reg, sz_header)  # Fuente regular, no negrilla
+    c.setFont(f_reg, sz_header)
     c.drawString(col100_left_x + 2 * mm, y, f"Por 100 {unidad_100}")
     c.drawString(colpor_left_x + 2 * mm, y, f"Por porción ({int(porcion_val)} {unidad_100})")
 
@@ -300,29 +300,11 @@ def generar_pdf(rows, no_signif_text, table_width_mm=100):
     # set for highlighted nutrients
     highlighted = {"Calorías (kcal)", "Grasa saturada", "Grasas trans", "Azúcares añadidos", "Sodio"}
 
-    # Calcular posición Y para líneas verticales (desde arriba hasta abajo de la tabla)
-    y_top_vertical = table_y + table_h - 3 * mm  # justo debajo del borde superior
-    y_bottom_vertical = table_y + 3 * mm  # justo encima del borde inferior
-
-    # Dibujar líneas verticales COMPLETAS primero
-    c.setLineWidth(0.75)
-    # Línea izquierda interior
-    x_left_v = table_x + 3 * mm
-    c.line(x_left_v, y_bottom_vertical, x_left_v, y_top_vertical)
-    
-    # Línea entre nombre y valores por 100g
-    x_name_right_v = name_col_right_x
-    c.line(x_name_right_v, y_bottom_vertical, x_name_right_v, y_top_vertical)
-    
-    # Línea entre columna 100g y por porción
-    x_col100_right_v = col100_right_x
-    c.line(x_col100_right_v, y_bottom_vertical, x_col100_right_v, y_top_vertical)
-
     for name, v100, vpor in rows:
         # spacer row handling
         if name == "" and v100 == "" and vpor == "":
             # create extra gap between groups (no separator line)
-            y -= row_h  
+            y -= row_h  # advance
             continue
 
         display_name = name
@@ -349,27 +331,37 @@ def generar_pdf(rows, no_signif_text, table_width_mm=100):
 
         # ensure non-empty strings
         v100s = v100 if v100 is not None else ""
-        vpors = vpor if vpor is not None else ""
+        v pors = vpor if vpor is not None else ""  # noqa: spacing
 
         # draw values
         if v100s != "":
             c.drawRightString(x_right_100, y, v100s)
-        if vpors != "":
-            c.drawRightString(x_right_por, y, vpors)
+        if v pors != "":
+            c.drawRightString(x_right_por, y, v pors)
 
         # advance vertical
         y -= row_h
 
         # draw thin separator (except after spacer we already skipped)
-        if name != "" or v100 != "" or vpor != "":
-            sep_y = y + mm2pt(thin_sep_offset_mm)
-            c.setLineWidth(0.5)
-            c.line(table_x + 3 * mm, sep_y, table_x + table_w - 3 * mm, sep_y)
+        sep_y = y + mm2pt(thin_sep_offset_mm)
+        c.setLineWidth(0.5)
+        c.line(table_x + 3 * mm, sep_y, table_x + table_w - 3 * mm, sep_y)
 
         # if this was sodium, draw thick separator here
         if display_name.strip().lower().startswith("sodio"):
             c.setLineWidth(1)
             c.line(table_x + 3 * mm, sep_y, table_x + table_w - 3 * mm, sep_y)
+
+    # draw vertical lines exactly at column boundaries (full inner height)
+    c.setLineWidth(0.75)
+    x_left_v = table_x + 3 * mm
+    x_name_right_v = name_col_right_x  # right edge of name col (no extra mm)
+    x_col100_right_v = col100_right_x  # right edge of col100
+    # Draw from slightly above bottom inner margin to slightly below top inner margin
+    y_bottom = table_y + 3 * mm
+    y_top = table_y + table_h - 3 * mm
+    for xv in (x_left_v, x_name_right_v, x_col100_right_v):
+        c.line(xv, y_bottom, xv, y_top)
 
     # Insert "No es fuente significativa..." inside recuadro under content
     if no_signif_text:
