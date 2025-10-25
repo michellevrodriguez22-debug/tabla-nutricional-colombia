@@ -1,4 +1,4 @@
-# app.py (versión corregida: columnas, negrillas en valores destacados, líneas verticales completas)
+# app.py (versión corregida - error de sintaxis arreglado)
 import streamlit as st
 import pandas as pd
 from io import BytesIO
@@ -211,34 +211,40 @@ else:
     st.success("No requiere sellos frontales (evaluación indicativa).")
 
 # -------------------------
-# Generación de PDF (definitiva)
+# Generación de PDF (COMPLETAMENTE CORREGIDA)
 # -------------------------
 def generar_pdf(rows, no_signif_text, table_width_mm=100):
     page_w, page_h = A4
     table_w = table_width_mm * mm
 
-    # Layout params (mm)
-    top_margin_mm = 6
+    # Layout params (mm) - AJUSTADOS PARA MEJOR ESPACIADO
+    top_margin_mm = 8
     left_inner_margin_mm = 6
     right_inner_margin_mm = 6
-    name_col_w_mm = 52  # ancho columna nombres
+    name_col_w_mm = 52
     value_col_w_mm = (table_width_mm - left_inner_margin_mm - right_inner_margin_mm - name_col_w_mm) / 2.0
 
-    # row height dynamic
-    row_h_mm = 7.0
-    n_rows = len(rows)
-    # minimal header / footer
-    header_block_mm = 18
-    footer_block_mm = 10
-    content_h_mm = header_block_mm + n_rows * row_h_mm + footer_block_mm
-    table_h_mm = max(75, content_h_mm)
+    # CÁLCULO DINÁMICO DE ALTURA BASADO EN CONTENIDO REAL
+    row_h_mm = 6.5  # Reducido ligeramente para mejor ajuste
+    
+    # Contar filas reales (excluyendo espacios)
+    n_real_rows = sum(1 for row in rows if row[0] != "" or row[1] != "" or row[2] != "")
+    
+    # Altura base + espacio para header + espacio para footer + espacio para frase final
+    header_height_mm = 28  # Aumentado para mejor espaciado
+    footer_height_mm = 12 if no_signif_text else 8
+    content_height_mm = n_real_rows * row_h_mm
+    table_h_mm = header_height_mm + content_height_mm + footer_height_mm
+    
+    # Asegurar altura mínima
+    table_h_mm = max(80, table_h_mm)
     table_h = table_h_mm * mm
 
-    # center
+    # Centrar tabla
     table_x = (page_w - table_w) / 2
     table_y = (page_h - table_h) / 2
 
-    # compute column positions (in points)
+    # Posiciones de columnas
     left_inner_x = table_x + left_inner_margin_mm * mm
     name_col_right_x = left_inner_x + name_col_w_mm * mm
     col100_left_x = name_col_right_x
@@ -246,131 +252,150 @@ def generar_pdf(rows, no_signif_text, table_width_mm=100):
     colpor_left_x = col100_right_x
     colpor_right_x = colpor_left_x + value_col_w_mm * mm
 
-    # create PDF
+    # Crear PDF
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
 
-    # Fonts & sizes
+    # Fuentes y tamaños
     f_reg = "Helvetica"
     f_bold = "Helvetica-Bold"
     sz_title = 10
-    sz_header = 8  # header "Por 100..." NOT bold per your instruction
-    sz_text = 9
-    sz_high = int(sz_text * 1.3)
+    sz_header = 8
+    sz_text = 8
+    sz_high = 9
 
-    # draw outer rect
+    # Dibujar rectángulo exterior
     c.setLineWidth(1)
     c.rect(table_x, table_y, table_w, table_h)
 
-    # Title and top lines: each in its own row
+    # TÍTULO Y ENCABEZADOS CON MEJOR ESPACIADO
     y = table_y + table_h - mm2pt(top_margin_mm)
+    
+    # Título principal
     c.setFont(f_bold, sz_title)
     c.drawString(table_x + left_inner_margin_mm * mm, y, "Información Nutricional")
-
-    # tamaño de porción (línea aparte)
-    y -= 6 * mm
+    
+    # Tamaño de porción
+    y -= 7 * mm
     c.setFont(f_reg, sz_text)
     c.drawString(table_x + left_inner_margin_mm * mm, y, f"Tamaño de porción: {porcion_text} ({int(porcion_val)} {unidad_100})")
-
-    # número de porciones (línea aparte)
+    
+    # Número de porciones
     y -= 6 * mm
     c.drawString(table_x + left_inner_margin_mm * mm, y, f"Número de porciones por envase: {num_porciones if num_porciones else '-'}")
 
-    # thick line under header
-    y -= 4 * mm
-    c.setLineWidth(1)
+    # LÍNEA GRUESA después del encabezado (según norma)
+    y -= 5 * mm
+    c.setLineWidth(1.2)  # Más gruesa
     c.line(table_x + 3 * mm, y, table_x + table_w - 3 * mm, y)
 
-    # header labels (not bold)
-    y -= 8 * mm
+    # Encabezados de columnas (SIN NEGRILLA)
+    y -= 7 * mm
     c.setFont(f_reg, sz_header)
     c.drawString(col100_left_x + 2 * mm, y, f"Por 100 {unidad_100}")
     c.drawString(colpor_left_x + 2 * mm, y, f"Por porción ({int(porcion_val)} {unidad_100})")
 
-    # underline header
-    y -= 3.5 * mm
+    # Subrayado de encabezados
+    y -= 3 * mm
     c.setLineWidth(0.75)
     c.line(table_x + 3 * mm, y, table_x + table_w - 3 * mm, y)
 
-    # start rows
-    y -= 8 * mm
-    row_h = row_h_mm * mm
-    thin_sep_offset_mm = 2.5
+    # POSICIÓN INICIAL PARA FILAS
+    y -= 6 * mm
+    row_h_pt = row_h_mm * mm
 
-    # set for highlighted nutrients
-    highlighted = {"Calorías (kcal)", "Grasa saturada", "Grasas trans", "Azúcares añadidos", "Sodio"}
+    # Nutrientes que van en negrilla y con indentación según resoluciones
+    highlighted_bold = {"Calorías (kcal)", "Grasa total", "Grasa saturada", "Grasas trans", 
+                       "Carbohidratos totales", "Azúcares añadidos", "Sodio", "Proteína"}
+    
+    # Nutrientes con indentación
+    indented_nutrients = {"Grasa poliinsaturada", "Grasa monoinsaturada", "Grasa saturada", 
+                         "Grasas trans", "Fibra dietaria", "Azúcares totales", "Azúcares añadidos"}
 
-    for name, v100, vpor in rows:
-        # spacer row handling
+    # DIBUJAR LÍNEAS VERTICALES COMPLETAS PRIMERO
+    c.setLineWidth(0.75)
+    y_top_vertical = table_y + table_h - 3 * mm
+    y_bottom_vertical = table_y + 3 * mm
+    
+    # Línea izquierda
+    x_left_v = table_x + 3 * mm
+    c.line(x_left_v, y_bottom_vertical, x_left_v, y_top_vertical)
+    
+    # Línea entre nombre y valores
+    x_name_right_v = name_col_right_x
+    c.line(x_name_right_v, y_bottom_vertical, x_name_right_v, y_top_vertical)
+    
+    # Línea entre columnas de valores
+    x_col100_right_v = col100_right_x
+    c.line(x_col100_right_v, y_bottom_vertical, x_col100_right_v, y_top_vertical)
+
+    # VARIABLE PARA CONTROLAR LÍNEAS GRUESAS
+    last_was_sodium = False
+
+    # DIBUJAR FILAS DE CONTENIDO
+    for i, (name, v100, vpor) in enumerate(rows):
+        # Manejar filas espaciadoras
         if name == "" and v100 == "" and vpor == "":
-            # create extra gap between groups (no separator line)
-            y -= row_h  # advance
+            y -= row_h_pt
             continue
 
         display_name = name
+        indent_amount = 4 if name.strip() in indented_nutrients else 0
 
-        # choose font for name
-        if display_name.strip() in highlighted:
+        # Aplicar formato según nutriente
+        if name.strip() in highlighted_bold:
             c.setFont(f_bold, sz_high)
+            text_y_offset = 1  # Pequeño ajuste para mejor alineación
         else:
             c.setFont(f_reg, sz_text)
+            text_y_offset = 0
 
-        # draw nutrient name (left area)
-        c.drawString(table_x + left_inner_margin_mm * mm + 1 * mm, y, display_name)
+        # Dibujar nombre del nutriente (con indentación si aplica)
+        name_x = table_x + left_inner_margin_mm * mm + 1 * mm + mm2pt(indent_amount)
+        c.drawString(name_x, y + text_y_offset, display_name.strip())
 
-        # draw values: if highlighted, also bold & bigger
-        if display_name.strip() in highlighted:
-            c.setFont(f_bold, sz_high)
-        else:
-            c.setFont(f_reg, sz_text)
-
-        # right align values to right side of column, with small right padding
+        # Dibujar valores (mismo formato que el nombre)
         pad_right = 2 * mm
         x_right_100 = col100_right_x - pad_right
         x_right_por = colpor_right_x - pad_right
 
-        # ensure non-empty strings
+        # CORRECCIÓN: Variables sin espacios en los nombres
         v100s = v100 if v100 is not None else ""
-        v pors = vpor if vpor is not None else ""  # noqa: spacing
+        vpors = vpor if vpor is not None else ""
 
-        # draw values
         if v100s != "":
-            c.drawRightString(x_right_100, y, v100s)
-        if v pors != "":
-            c.drawRightString(x_right_por, y, v pors)
+            c.drawRightString(x_right_100, y + text_y_offset, v100s)
+        if vpors != "":
+            c.drawRightString(x_right_por, y + text_y_offset, vpors)
 
-        # advance vertical
-        y -= row_h
+        # AVANZAR posición Y
+        y -= row_h_pt
 
-        # draw thin separator (except after spacer we already skipped)
-        sep_y = y + mm2pt(thin_sep_offset_mm)
-        c.setLineWidth(0.5)
-        c.line(table_x + 3 * mm, sep_y, table_x + table_w - 3 * mm, sep_y)
+        # DIBUJAR LÍNEAS HORIZONTALES CON GROSOR DIFERENCIADO
+        if i < len(rows) - 1:  # No dibujar después de la última fila
+            if name.strip().lower() == "sodio":
+                # LÍNEA GRUESA después de sodio
+                c.setLineWidth(1.2)
+                last_was_sodium = True
+            elif last_was_sodium:
+                # LÍNEA GRUESA después de micronutrientes (si sigue después de sodio)
+                c.setLineWidth(1.2)
+                last_was_sodium = False
+            else:
+                # Línea normal para separación entre filas
+                c.setLineWidth(0.5)
+            
+            # Posición de la línea (ligeramente arriba del texto siguiente)
+            line_y = y + mm2pt(2)
+            c.line(table_x + 3 * mm, line_y, table_x + table_w - 3 * mm, line_y)
 
-        # if this was sodium, draw thick separator here
-        if display_name.strip().lower().startswith("sodio"):
-            c.setLineWidth(1)
-            c.line(table_x + 3 * mm, sep_y, table_x + table_w - 3 * mm, sep_y)
-
-    # draw vertical lines exactly at column boundaries (full inner height)
-    c.setLineWidth(0.75)
-    x_left_v = table_x + 3 * mm
-    x_name_right_v = name_col_right_x  # right edge of name col (no extra mm)
-    x_col100_right_v = col100_right_x  # right edge of col100
-    # Draw from slightly above bottom inner margin to slightly below top inner margin
-    y_bottom = table_y + 3 * mm
-    y_top = table_y + table_h - 3 * mm
-    for xv in (x_left_v, x_name_right_v, x_col100_right_v):
-        c.line(xv, y_bottom, xv, y_top)
-
-    # Insert "No es fuente significativa..." inside recuadro under content
+    # FRASE "No es fuente significativa..." en la parte inferior
     if no_signif_text:
-        # place at bottom left inside table, above inner bottom margin
-        ns_wrap = textwrap.wrap(no_signif_text, width=70)
-        ns_y = table_y + 6 * mm
-        c.setFont(f_reg, 7.5)
+        ns_y = table_y + 8 * mm
+        c.setFont(f_reg, 7)
+        ns_wrap = textwrap.wrap(no_signif_text, width=80)
         for i, line in enumerate(ns_wrap):
-            c.drawString(table_x + left_inner_margin_mm * mm, ns_y + i * 4.2, line)
+            c.drawString(table_x + left_inner_margin_mm * mm, ns_y - (i * 3.5 * mm), line)
 
     c.showPage()
     c.save()
@@ -382,5 +407,15 @@ def generar_pdf(rows, no_signif_text, table_width_mm=100):
 # -------------------------
 st.markdown("---")
 if st.button("Generar y descargar PDF"):
-    pdfbuf = generar_pdf(rows, no_signif_text, table_width_mm=100)
-    st.download_button("Descargar tabla nutricional (PDF)", data=pdfbuf, file_name="tabla_nutricional.pdf", mime="application/pdf")
+    if not main_selected:
+        st.error("Debe seleccionar al menos un nutriente principal.")
+    else:
+        with st.spinner("Generando PDF..."):
+            pdfbuf = generar_pdf(rows, no_signif_text, table_width_mm=100)
+            st.success("PDF generado correctamente!")
+            st.download_button(
+                "Descargar tabla nutricional (PDF)", 
+                data=pdfbuf, 
+                file_name="tabla_nutricional.pdf", 
+                mime="application/pdf"
+            )
