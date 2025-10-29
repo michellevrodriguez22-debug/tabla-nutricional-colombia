@@ -1,418 +1,528 @@
-# app.py (versión corregida - negrillas específicas y líneas mejoradas)
-import streamlit as st
-import pandas as pd
+# app.py
+import math
 from io import BytesIO
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
+from datetime import datetime
+
+import pandas as pd
+import streamlit as st
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-import textwrap
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Table,
+    TableStyle,
+    Paragraph,
+    Spacer,
+)
 
-# -------------------------
-# Helpers
-# -------------------------
-def mm2pt(x):
-    return x * mm
+# =======================================
+# Configuración general
+# =======================================
+st.set_page_config(page_title="Generador de Tabla Nutricional (Colombia)", layout="wide")
+st.title("Generador de Tabla de Información Nutricional — (Res. 810/2021, 2492/2022, 254/2023)")
 
-def trim_num_str(x):
-    if x is None:
-        return ""
+# =======================================
+# Utilidades
+# =======================================
+def kcal_from_macros(fat_g: float, carb_g: float, protein_g: float, organic_acids_g: float = 0.0, alcohol_g: float = 0.0) -> float:
+    """
+    Energía según factores aceptados en 810/2021:
+    - Carbohidratos: 4 kcal/g
+    - Proteína:      4 kcal/g
+    - Grasa:         9 kcal/g
+    - Alcohol:       7 kcal/g (poco frecuente en alimentos)
+    - Ácidos org.:   3 kcal/g (si aplica)
+    """
+    fat_g = fat_g or 0.0
+    carb_g = carb_g or 0.0
+    protein_g = protein_g or 0.0
+    organic_acids_g = organic_acids_g or 0.0
+    alcohol_g = alcohol_g or 0.0
+    kcal = 9*fat_g + 4*carb_g + 4*protein_g + 7*alcohol_g + 3*organic_acids_g
+    return float(round(kcal, 0))
+
+def per100_from_portion(value_per_portion: float, portion_size: float) -> float:
+    if portion_size and portion_size > 0:
+        return float(round((value_per_portion / portion_size) * 100.0, 2))
+    return 0.0
+
+def portion_from_per100(value_per100: float, portion_size: float) -> float:
+    if portion_size and portion_size > 0:
+        return float(round((value_per100 * portion_size) / 100.0, 2))
+    return 0.0
+
+def pct_energy_from_nutrient_kcal(nutrient_kcal: float, total_kcal: float) -> float:
+    if total_kcal and total_kcal > 0:
+        return round((nutrient_kcal / total_kcal) * 100.0, 1)
+    return 0.0
+
+def as_num(x):
     try:
-        if isinstance(x, float):
-            s = f"{x:.3f}".rstrip('0').rstrip('.')
-        else:
-            s = str(x)
-        return s
-    except Exception:
-        return str(x)
+        if x is None or x == "":
+            return 0.0
+        return float(x)
+    except:
+        return 0.0
 
-# -------------------------
-# App UI
-# -------------------------
-st.set_page_config(page_title="Generador Tabla Nutricional", layout="centered")
-st.title("Generador de Tabla de Información Nutricional (Resol. 810/2021)")
+# =======================================
+# Sidebar — Metadatos y configuración
+# =======================================
+st.sidebar.header("Datos del producto")
+product_type = st.sidebar.selectbox("Tipo de producto", ["Producto terminado", "Materia prima"])
+physical_state = st.sidebar.selectbox("Estado físico", ["Sólido (g)", "Líquido (mL)"])
+input_basis = st.sidebar.radio("Modo de ingreso de datos", ["Por porción", "Por 100 g/mL"], index=0)
 
-# Tipo de producto
-tipo = st.selectbox("Tipo de producto", ["Sólido (por 100 g)", "Líquido (por 100 mL)"])
-unidad_100 = "g" if tipo.startswith("Sólido") else "mL"
+product_name = st.sidebar.text_input("Nombre del producto")
+brand_name = st.sidebar.text_input("Marca (opcional)")
+provider = st.sidebar.text_input("Proveedor/Fabricante (opcional)")
 
-# Nutrientes principales (orden normativo, usuario selecciona los que aplican)
-st.header("Nutrientes principales (seleccione los que aplican)")
-MAIN_ORDER = [
-    "Grasa total",
-    "Grasa poliinsaturada",
-    "Grasa monoinsaturada",
-    "Grasa saturada",
-    "Grasas trans",
-    "Carbohidratos totales",
-    "Fibra dietaria",
-    "Azúcares totales",
-    "Azúcares añadidos",
-    "Proteína",
-    "Sodio"
+col_ps1, col_ps2 = st.sidebar.columns(2)
+with col_ps1:
+    portion_size = as_num(st.text_input("Tamaño de porción (solo número)", value="50"))
+with col_ps2:
+    portion_unit = "g" if "Sólido" in physical_state else "mL"
+    st.text_input("Unidad de porción", value=portion_unit, disabled=True)
+
+servings_per_pack = as_num(st.sidebar.text_input("Porciones por envase (número)", value="1"))
+
+table_format = st.sidebar.selectbox("Formato de tabla", ["Vertical estándar", "Simplificado"])
+include_kj = st.sidebar.checkbox("Mostrar también kJ (opcional)", value=True)
+
+# Vitaminas/minerales (multi-selección)
+st.sidebar.header("Vitaminas y minerales a declarar (opcional)")
+vm_options = [
+    "Vitamina A (µg RE)",
+    "Vitamina D (µg)",
+    "Calcio (mg)",
+    "Hierro (mg)",
+    "Zinc (mg)",
+    "Potasio (mg)",
+    "Vitamina C (mg)",
+    "Vitamina E (mg)",
+    "Vitamina B12 (µg)",
+    "Ácido fólico (µg)",
 ]
-main_selected = []
-st.markdown("**Calorías (kcal)** se calcula automáticamente y siempre aparece.")
-for nut in MAIN_ORDER:
-    default = True if nut in ["Grasa total", "Grasa saturada", "Carbohidratos totales", "Proteína", "Sodio"] else False
-    if st.checkbox(nut, value=default):
-        main_selected.append(nut)
+selected_vm = st.sidebar.multiselect("Selecciona micronutrientes a incluir", vm_options, default=["Vitamina A (µg RE)", "Vitamina D (µg)", "Calcio (mg)", "Hierro (mg)", "Zinc (mg)"])
 
-st.markdown("---")
+# Frase opcional de "No es fuente significativa de..."
+footnote_ns = st.sidebar.text_input("Frase al pie (opcional)", value="No es fuente significativa de _____.")
 
-# Porciones (cada en su renglón según norma)
-st.header("Datos de porción")
-porcion_text = st.text_input("Texto tamaño de porción (ej.: 1 porción = 30 g)", "1 porción")
-porcion_val = st.number_input(f"Tamaño de porción (número en {unidad_100})", min_value=1.0, value=30.0, step=1.0)
-num_porciones = st.text_input("Número de porciones por envase", "")
+# =======================================
+# Ingreso de nutrientes (sin unidades, solo números)
+# =======================================
+st.header("Ingreso de información nutricional (sin unidades)")
+st.caption("Ingresa **solo números**. El sistema calcula automáticamente por 100 g/mL y por porción.")
 
-st.markdown("---")
+c1, c2 = st.columns(2)
 
-# Ingresos por 100
-st.header(f"Valores por 100 {unidad_100} (ingrese sólo números)")
-main_inputs = {}
-for nut in MAIN_ORDER:
-    if nut not in main_selected:
-        main_inputs[nut] = 0.0
-        continue
-    if nut == "Sodio":
-        main_inputs[nut] = st.number_input(f"{nut} (mg por 100 {unidad_100})", min_value=0.0, value=0.0, step=1.0, key=f"in_{nut}")
-    else:
-        main_inputs[nut] = st.number_input(f"{nut} (g por 100 {unidad_100})", min_value=0.0, value=0.0, step=0.01, key=f"in_{nut}")
+with c1:
+    st.subheader("Macronutrientes")
+    fat_total_input = as_num(st.text_input("Grasa total (g)", value="5"))
+    sat_fat_input   = as_num(st.text_input("Grasa saturada (g)", value="2"))
+    trans_fat_input = as_num(st.text_input("Grasas trans (g)", value="0"))
+    carb_input      = as_num(st.text_input("Carbohidratos totales (g)", value="20"))
+    sugars_total_input  = as_num(st.text_input("Azúcares totales (g)", value="10"))
+    sugars_added_input  = as_num(st.text_input("Azúcares añadidos (g)", value="8"))
+    fiber_input     = as_num(st.text_input("Fibra dietaria (g)", value="2"))
+    protein_input   = as_num(st.text_input("Proteína (g)", value="3"))
+    sodium_input_mg = as_num(st.text_input("Sodio (mg)", value="150"))
 
-st.markdown("---")
+with c2:
+    st.subheader("Micronutrientes (opcional)")
+    vm_values = {}
+    for vm in selected_vm:
+        vm_values[vm] = as_num(st.text_input(vm, value="0"))
 
-# Micronutrientes (predefinidos + custom)
-st.header("Micronutrientes (Tabla 9)")
-PREDEF_MICROS = [
-    ("Vitamina A", "µg ER"),
-    ("Vitamina D", "µg"),
-    ("Vitamina E", "mg"),
-    ("Vitamina K", "µg"),
-    ("Vitamina C", "mg"),
-    ("Tiamina (B1)", "mg"),
-    ("Riboflavina (B2)", "mg"),
-    ("Niacina (B3)", "mg"),
-    ("Vitamina B6", "mg"),
-    ("Folato (B9)", "µg"),
-    ("Vitamina B12", "µg"),
-    ("Calcio", "mg"),
-    ("Hierro", "mg"),
-    ("Zinc", "mg"),
-    ("Potasio", "mg")
-]
-micro_names = [m[0] for m in PREDEF_MICROS]
-selected_micros = st.multiselect("Micronutrientes predefinidos:", micro_names)
-micros_values = {}
-if selected_micros:
-    for name in selected_micros:
-        micros_values[name] = st.number_input(f"{name} (por 100 {unidad_100})", min_value=0.0, value=0.0, step=0.01, key=f"mic_{name}")
+# =======================================
+# Normalización por porción vs por 100 g/mL
+# =======================================
+if input_basis == "Por porción":
+    # Base: por porción -> calcular por 100
+    fat_total_pp = fat_total_input
+    sat_fat_pp   = sat_fat_input
+    trans_fat_pp = trans_fat_input
+    carb_pp      = carb_input
+    sugars_total_pp = sugars_total_input
+    sugars_added_pp = sugars_added_input
+    fiber_pp     = fiber_input
+    protein_pp   = protein_input
+    sodium_pp_mg = sodium_input_mg
 
-add_custom = st.checkbox("Añadir micronutrientes personalizados (opcional)")
-custom_micros = []
-if add_custom:
-    st.markdown("Añada cada micronutriente personalizado (nombre, valor por 100, unidad)")
-    n_custom = st.number_input("¿Cuántos personalizados desea añadir?", min_value=1, max_value=10, value=1)
-    for i in range(int(n_custom)):
-        cname = st.text_input(f"Nombre micronutriente #{i+1}", key=f"cname_{i}")
-        cval = st.number_input(f"Valor por 100 {unidad_100} #{i+1}", min_value=0.0, value=0.0, step=0.01, key=f"cval_{i}")
-        cunit = st.selectbox(f"Unidad #{i+1}", ["mg", "µg", "µg ER", "g", "IU"], key=f"cunit_{i}")
-        if cname:
-            custom_micros.append((cname, cval, cunit))
-
-st.markdown("---")
-
-# Frase "No es fuente significativa..." dentro del recuadro
-st.header("Frase de nutrientes no significativos (se imprimirá dentro del recuadro)")
-no_signif_text = st.text_input("Ej.: No es fuente significativa de: vitamina C, potasio.", "")
-
-st.markdown("---")
-
-# Cálculos
-factor = porcion_val / 100.0
-fat = main_inputs.get("Grasa total", 0.0)
-prot = main_inputs.get("Proteína", 0.0)
-cho = main_inputs.get("Carbohidratos totales", 0.0)
-energia_100 = round(4 * (prot + cho) + 9 * fat, 0)
-energia_por = int(round(energia_100 * factor, 0))
-
-# Construir filas en orden normativo, insertando un spacer entre grupos
-rows = []
-rows.append(("Calorías (kcal)", str(energia_100), str(energia_por)))
-
-# Fat group
-fat_group = ["Grasa total", "Grasa poliinsaturada", "Grasa monoinsaturada", "Grasa saturada", "Grasas trans"]
-fat_included = [n for n in fat_group if n in main_selected]
-for idx, name in enumerate(fat_group):
-    if name in main_selected:
-        v100 = main_inputs.get(name, 0.0)
-        vpor = round(v100 * factor, 3)
-        indent = "" if name == "Grasa total" else "  "
-        rows.append((f"{indent}{name}", f"{trim_num_str(v100)} g" if v100 != 0 else "0", f"{trim_num_str(vpor)} g" if v100 != 0 else "0"))
-
-# If both fat and carb groups exist, add spacer
-carb_group = ["Carbohidratos totales", "Fibra dietaria", "Azúcares totales", "Azúcares añadidos"]
-if any(n in main_selected for n in fat_group) and any(n in main_selected for n in carb_group):
-    rows.append(("", "", ""))  # spacer row
-
-# Carb group
-for name in carb_group:
-    if name in main_selected:
-        v100 = main_inputs.get(name, 0.0)
-        vpor = round(v100 * factor, 3)
-        indent = "" if name == "Carbohidratos totales" else "  "
-        rows.append((f"{indent}{name}", f"{trim_num_str(v100)} g" if v100 != 0 else "0", f"{trim_num_str(vpor)} g" if v100 != 0 else "0"))
-
-# Protein and Sodium
-if "Proteína" in main_selected:
-    v100 = main_inputs.get("Proteína", 0.0)
-    vpor = round(v100 * factor, 3)
-    rows.append(("Proteína", f"{trim_num_str(v100)} g" if v100 != 0 else "0", f"{trim_num_str(vpor)} g" if v100 != 0 else "0"))
-if "Sodio" in main_selected:
-    v100 = main_inputs.get("Sodio", 0.0)
-    vpor = int(round(v100 * factor, 0))
-    rows.append(("Sodio", f"{int(v100)} mg" if v100 != 0 else "0", f"{vpor} mg" if v100 != 0 else "0"))
-
-# Micronutrientes predefinidos (en orden PREDEF_MICROS)
-for name, unit in PREDEF_MICROS:
-    if name in selected_micros:
-        v100 = micros_values.get(name, 0.0)
-        vpor = round(v100 * factor, 3)
-        rows.append((name, f"{trim_num_str(v100)} {unit}" if v100 != 0 else "", f"{trim_num_str(vpor)} {unit}" if vpor != 0 else ""))
-
-# Custom micros
-for name, val, unit in custom_micros:
-    v100 = val
-    vpor = round(v100 * factor, 3)
-    rows.append((name, f"{trim_num_str(v100)} {unit}" if v100 != 0 else "", f"{trim_num_str(vpor)} {unit}" if vpor != 0 else ""))
-
-# Preview
-st.subheader("Vista previa")
-df_preview = pd.DataFrame(rows, columns=["Nutriente", f"Por 100 {unidad_100}", f"Por porción ({int(porcion_val)} {unidad_100})"])
-st.dataframe(df_preview, use_container_width=True)
-
-st.markdown("---")
-
-# Evaluación indicativa sellos frontales
-st.subheader("Evaluación indicativa de sellos frontales")
-sellos = []
-if energia_100 >= 275:
-    sellos.append("EXCESO EN CALORÍAS")
-if main_inputs.get("Grasa saturada", 0) >= 4:
-    sellos.append("EXCESO EN GRASA SATURADA")
-if main_inputs.get("Azúcares totales", 0) >= 10:
-    sellos.append("EXCESO EN AZÚCARES")
-if main_inputs.get("Sodio", 0) >= 300:
-    sellos.append("EXCESO EN SODIO")
-
-if sellos:
-    for s in sellos:
-        st.error(s)
+    fat_total_100 = per100_from_portion(fat_total_pp, portion_size)
+    sat_fat_100   = per100_from_portion(sat_fat_pp, portion_size)
+    trans_fat_100 = per100_from_portion(trans_fat_pp, portion_size)
+    carb_100      = per100_from_portion(carb_pp, portion_size)
+    sugars_total_100 = per100_from_portion(sugars_total_pp, portion_size)
+    sugars_added_100 = per100_from_portion(sugars_added_pp, portion_size)
+    fiber_100     = per100_from_portion(fiber_pp, portion_size)
+    protein_100   = per100_from_portion(protein_pp, portion_size)
+    sodium_100_mg = per100_from_portion(sodium_pp_mg, portion_size)
 else:
-    st.success("No requiere sellos frontales (evaluación indicativa).")
+    # Base: por 100 -> calcular por porción
+    fat_total_100 = fat_total_input
+    sat_fat_100   = sat_fat_input
+    trans_fat_100 = trans_fat_input
+    carb_100      = carb_input
+    sugars_total_100 = sugars_total_input
+    sugars_added_100 = sugars_added_input
+    fiber_100     = fiber_input
+    protein_100   = protein_input
+    sodium_100_mg = sodium_input_mg
 
-# -------------------------
-# Generación de PDF (CORREGIDA - negrillas específicas y líneas mejoradas)
-# -------------------------
-def generar_pdf(rows, no_signif_text, table_width_mm=100):
-    page_w, page_h = A4
-    table_w = table_width_mm * mm
+    fat_total_pp = portion_from_per100(fat_total_100, portion_size)
+    sat_fat_pp   = portion_from_per100(sat_fat_100, portion_size)
+    trans_fat_pp = portion_from_per100(trans_fat_100, portion_size)
+    carb_pp      = portion_from_per100(carb_100, portion_size)
+    sugars_total_pp = portion_from_per100(sugars_total_100, portion_size)
+    sugars_added_pp = portion_from_per100(sugars_added_100, portion_size)
+    fiber_pp     = portion_from_per100(fiber_100, portion_size)
+    protein_pp   = portion_from_per100(protein_100, portion_size)
+    sodium_pp_mg = portion_from_per100(sodium_100_mg, portion_size)
 
-    # Layout params (mm)
-    top_margin_mm = 8
-    left_inner_margin_mm = 6
-    right_inner_margin_mm = 6
-    name_col_w_mm = 52
-    value_col_w_mm = (table_width_mm - left_inner_margin_mm - right_inner_margin_mm - name_col_w_mm) / 2.0
+# Vitaminas/minerales: normalizar también
+vm_pp = {}
+vm_100 = {}
+for vm, val in vm_values.items():
+    if input_basis == "Por porción":
+        vm_pp[vm] = val
+        vm_100[vm] = per100_from_portion(val, portion_size)
+    else:
+        vm_100[vm] = val
+        vm_pp[vm] = portion_from_per100(val, portion_size)
 
-    # CÁLCULO DINÁMICO DE ALTURA
-    row_h_mm = 6.0  # Altura reducida para mejor ajuste
-    
-    # Contar filas reales (excluyendo espacios)
-    n_real_rows = sum(1 for row in rows if row[0] != "" or row[1] != "" or row[2] != "")
-    
-    # Altura calculada dinámicamente
-    header_height_mm = 25
-    footer_height_mm = 10 if no_signif_text else 6
-    content_height_mm = n_real_rows * row_h_mm
-    table_h_mm = header_height_mm + content_height_mm + footer_height_mm
-    table_h_mm = max(70, table_h_mm)  # Altura mínima
-    table_h = table_h_mm * mm
+# =======================================
+# Cálculo de Energía y validaciones FOP
+# =======================================
+kcal_pp = kcal_from_macros(fat_total_pp, carb_pp, protein_pp)
+kcal_100 = kcal_from_macros(fat_total_100, carb_100, protein_100)
 
-    # Centrar tabla
-    table_x = (page_w - table_w) / 2
-    table_y = (page_h - table_h) / 2
+kj_pp = round(kcal_pp * 4.184) if include_kj else None
+kj_100 = round(kcal_100 * 4.184) if include_kj else None
 
-    # Posiciones de columnas
-    left_inner_x = table_x + left_inner_margin_mm * mm
-    name_col_right_x = left_inner_x + name_col_w_mm * mm
-    col100_left_x = name_col_right_x
-    col100_right_x = col100_left_x + value_col_w_mm * mm
-    colpor_left_x = col100_right_x
-    colpor_right_x = colpor_left_x + value_col_w_mm * mm
+# Porcentajes de energía de nutrientes críticos (para FOP)
+pct_kcal_sug_add_pp = pct_energy_from_nutrient_kcal(4*sugars_added_pp, kcal_pp)
+pct_kcal_sat_fat_pp = pct_energy_from_nutrient_kcal(9*sat_fat_pp, kcal_pp)
+pct_kcal_trans_pp   = pct_energy_from_nutrient_kcal(9*trans_fat_pp, kcal_pp)
 
-    # Crear PDF
+# Criterios 2492/2022 y 254/2023 (OPS)
+is_liquid = ("Líquido" in physical_state)
+fop_sugar = pct_kcal_sug_add_pp >= 10.0
+fop_sat   = pct_kcal_sat_fat_pp >= 10.0
+fop_trans = pct_kcal_trans_pp >= 1.0
+
+# Sodio: 1 mg/kcal o >=300 mg/100 g para sólidos.
+# Bebidas sin aporte energético: >=40 mg/100 mL
+if is_liquid and kcal_100 == 0:
+    fop_sodium = sodium_100_mg >= 40.0
+else:
+    fop_sodium = (sodium_100_mg >= 300.0) or ((sodium_pp_mg / max(kcal_pp, 1)) >= 1.0)
+
+st.subheader("Resultado de validación informativa (Sellos de advertencia posibles)")
+colf1, colf2, colf3, colf4 = st.columns(4)
+with colf1:
+    st.write(f"Azúcares añadidos ≥10% kcal: **{'Sí' if fop_sugar else 'No'}**")
+with colf2:
+    st.write(f"Grasa saturada ≥10% kcal: **{'Sí' if fop_sat else 'No'}**")
+with colf3:
+    st.write(f"Grasas trans ≥1% kcal: **{'Sí' if fop_trans else 'No'}**")
+with colf4:
+    st.write(f"Sodio criterio aplicable: **{'Sí' if fop_sodium else 'No'}**")
+
+# =======================================
+# Previsualización tipo “tabla de empaque”
+# (negro/blanco; orden, negrillas y línea separadora)
+# =======================================
+st.header("Previsualización de la Tabla de Información Nutricional")
+
+def fmt(x, nd=1):
+    # Para sodio (mg) usamos 0 decimales; para g, 1 o 2. Mantener simple:
+    if isinstance(x, (int, float)):
+        if math.isfinite(x):
+            return f"{x:.{nd}f}".rstrip('0').rstrip('.') if nd > 0 else f"{int(round(x,0))}"
+    return "0"
+
+col_preview_left, col_preview_right = st.columns([0.66, 0.34])
+
+with col_preview_left:
+    st.markdown("**Vista previa (no a escala)**")
+    # HTML/CSS para una vista previa simple en B/N (PDF se hará con reportlab)
+    # Negrillas 1.3x para calorías, grasa saturada, trans, azúcares añadidos y sodio (simulamos con font-weight y tamaño).
+    css = """
+    <style>
+    .nutri-table {border:2px solid #000; width:100%; font-family: Arial, Helvetica, sans-serif; color:#000;}
+    .nutri-th {font-weight:bold; font-size:14px; padding:4px 6px; border-bottom:2px solid #000;}
+    .nutri-row {border-top:1px solid #000;}
+    .nutri-cell {padding:4px 6px; border-right:1px solid #000; vertical-align:top;}
+    .nutri-cell:last-child {border-right:none;}
+    .nutri-sep {border-top:2px solid #000;}
+    .nutri-bold-13 {font-weight:bold; font-size: 1.15em;}
+    .nutri-small {font-size: 12px;}
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+    per100_label = "por 100 g" if not is_liquid else "por 100 mL"
+    perportion_label = f"por porción ({fmt(portion_size,0)} {portion_unit})"
+
+    # Construcción HTML
+    html = f"""
+    <table class="nutri-table" cellspacing="0" cellpadding="0">
+      <tr>
+        <th class="nutri-th" colspan="3">Información Nutricional</th>
+      </tr>
+      <tr>
+        <td class="nutri-cell" colspan="3"><span class="nutri-small">Tamaño de porción:</span> {fmt(portion_size,0)} {portion_unit}<br>
+        <span class="nutri-small">Porciones por envase:</span> {fmt(servings_per_pack,0)}</td>
+      </tr>
+      <tr>
+        <td class="nutri-cell nutri-sep nutri-bold-13">Calorías</td>
+        <td class="nutri-cell nutri-sep nutri-bold-13" style="text-align:right;">{fmt(kcal_100,0)} {('('+str(kj_100)+' kJ)') if include_kj else ''}</td>
+        <td class="nutri-cell nutri-sep nutri-bold-13" style="text-align:right;">{fmt(kcal_pp,0)} {('('+str(kj_pp)+' kJ)') if include_kj else ''}</td>
+      </tr>
+      <tr class="nutri-row">
+        <td class="nutri-cell"><b>{per100_label}</b></td>
+        <td class="nutri-cell" style="text-align:right;"><b>{perportion_label}</b></td>
+        <td class="nutri-cell" style="text-align:right;"><b></b></td>
+      </tr>
+    """
+
+    # Para alinear con orden 810: grasa total, saturada, trans; carbohidratos, fibra, azúcares totales, añadidos; proteína; sodio
+    def row_line(name, v100, vpp, unit, bold=False):
+        name_html = f"<span class='nutri-bold-13'>{name}</span>" if bold else name
+        return f"""
+        <tr class="nutri-row">
+          <td class="nutri-cell">{name_html}</td>
+          <td class="nutri-cell" style="text-align:right;">{fmt(v100, 1)} {unit}</td>
+          <td class="nutri-cell" style="text-align:right;">{fmt(vpp, 1)} {unit}</td>
+        </tr>
+        """
+
+    html += row_line("Grasa total", fat_total_100, fat_total_pp, "g", bold=False)
+    html += row_line("  de las cuales Grasa saturada", sat_fat_100, sat_fat_pp, "g", bold=True)
+    html += row_line("  Grasas trans", trans_fat_100, trans_fat_pp, "g", bold=True)
+
+    html += row_line("Carbohidratos", carb_100, carb_pp, "g", bold=False)
+    html += row_line("  Azúcares totales", sugars_total_100, sugars_total_pp, "g", bold=False)
+    html += row_line("  Azúcares añadidos", sugars_added_100, sugars_added_pp, "g", bold=True)
+    html += row_line("  Fibra dietaria", fiber_100, fiber_pp, "g", bold=False)
+
+    html += row_line("Proteína", protein_100, protein_pp, "g", bold=False)
+    html += row_line("Sodio", sodium_100_mg, sodium_pp_mg, "mg", bold=True)
+
+    # Línea de separación para vitaminas/minerales (si hay)
+    if selected_vm:
+        html += """
+        <tr><td class="nutri-cell" colspan="3" style="border-top:2px solid #000;"></td></tr>
+        """
+
+        for vm in selected_vm:
+            unit = "mg"
+            if "µg" in vm:
+                unit = "µg"
+            if "Potasio" in vm:
+                unit = "mg"
+            v100 = vm_100.get(vm, 0.0)
+            vpp  = vm_pp.get(vm, 0.0)
+            html += row_line(vm.replace(" (µg RE)", "").replace(" (µg)", "").replace(" (mg)", ""), v100, vpp, unit, bold=False)
+
+    if footnote_ns.strip():
+        html += f"""
+        <tr>
+          <td class="nutri-cell" colspan="3">{footnote_ns}</td>
+        </tr>
+        """
+
+    html += "</table>"
+    st.markdown(html, unsafe_allow_html=True)
+
+with col_preview_right:
+    st.subheader("Datos de encabezado")
+    st.write(f"**Producto:** {product_name or '-'}")
+    if brand_name:
+        st.write(f"**Marca:** {brand_name}")
+    if provider:
+        st.write(f"**Proveedor/Fabricante:** {provider}")
+    st.write(f"**Formato de tabla:** {table_format}")
+    st.write(f"**Estado físico:** {'Líquido' if is_liquid else 'Sólido'}")
+    st.write(f"**Porción:** {fmt(portion_size,0)} {portion_unit} — **Porciones/Envase:** {fmt(servings_per_pack,0)}")
+
+# =======================================
+# Generación de PDF (blanco y negro, Helvetica, líneas conectadas)
+# =======================================
+def build_pdf_buffer():
     buf = BytesIO()
-    c = canvas.Canvas(buf, pagesize=A4)
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=landscape(A4),
+        leftMargin=10*mm, rightMargin=10*mm,
+        topMargin=10*mm, bottomMargin=10*mm
+    )
+    styles = getSampleStyleSheet()
+    style_header = ParagraphStyle("header", parent=styles["Normal"], fontName="Helvetica", fontSize=10, leading=12)
+    style_cell = ParagraphStyle("cell", parent=styles["Normal"], fontName="Helvetica", fontSize=9, leading=11)
+    style_cell_bold = ParagraphStyle("cell_b", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=10.5, leading=12)  # ~1.3×
 
-    # Fuentes y tamaños
-    f_reg = "Helvetica"
-    f_bold = "Helvetica-Bold"
-    sz_title = 10
-    sz_header = 8
-    sz_text = 8
-    sz_bold = 8  # Mismo tamaño pero negrilla
+    story = []
+    # Título superior (no parte de la caja obligatoria; solo para el reporte)
+    meta = f"<b>Tabla de Información Nutricional</b> — {product_name or ''}"
+    story.append(Paragraph(meta, style_header))
+    story.append(Spacer(1, 4))
 
-    # Dibujar rectángulo exterior
-    c.setLineWidth(1)
-    c.rect(table_x, table_y, table_w, table_h)
+    # Construcción de la tabla normativa (recuadro)
+    # Encabezado de caja
+    per100_label = "por 100 g" if not is_liquid else "por 100 mL"
+    perportion_label = f"por porción ({int(round(portion_size))} {portion_unit})"
 
-    # TÍTULO Y ENCABEZADOS
-    y = table_y + table_h - mm2pt(top_margin_mm)
-    
-    # Título principal (EN NEGRILLA)
-    c.setFont(f_bold, sz_title)
-    c.drawString(table_x + left_inner_margin_mm * mm, y, "Información Nutricional")
-    
-    # Tamaño de porción (normal)
-    y -= 6 * mm
-    c.setFont(f_reg, sz_text)
-    c.drawString(table_x + left_inner_margin_mm * mm, y, f"Tamaño de porción: {porcion_text} ({int(porcion_val)} {unidad_100})")
-    
-    # Número de porciones (normal)
-    y -= 5 * mm
-    c.drawString(table_x + left_inner_margin_mm * mm, y, f"Número de porciones por envase: {num_porciones if num_porciones else '-'}")
+    # Filas
+    data = []
+    # Título dentro del recuadro
+    data.append([
+        Paragraph("<b>Información Nutricional</b>", style_header),
+        "", ""
+    ])
+    # Tamaño de porción / Porciones
+    data.append([
+        Paragraph(f"Tamaño de porción: {int(round(portion_size))} {portion_unit}<br/>Porciones por envase: {int(round(servings_per_pack))}", style_cell),
+        "", ""
+    ])
+    # Línea separadora gruesa antes de calorías
+    # (la definiremos vía TableStyle con LINEABOVE en la fila de calorías)
+    # Calorías (negrilla 1.3×)
+    kcal_100_txt = f"{int(round(kcal_100))} kcal" + (f" ({int(round(kj_100))} kJ)" if include_kj else "")
+    kcal_pp_txt = f"{int(round(kcal_pp))} kcal" + (f" ({int(round(kj_pp))} kJ)" if include_kj else "")
+    data.append([
+        Paragraph("Calorías", style_cell_bold),
+        Paragraph(kcal_100_txt, style_cell_bold),
+        Paragraph(kcal_pp_txt, style_cell_bold),
+    ])
+    # Encabezados de columnas por 100 y por porción
+    data.append([
+        Paragraph(per100_label, style_cell),
+        Paragraph(perportion_label, style_cell),
+        Paragraph("", style_cell),
+    ])
 
-    # LÍNEA GRUESA después del encabezado
-    y -= 4 * mm
-    c.setLineWidth(1.0)
-    c.line(table_x, y, table_x + table_w, y)
+    # Helper para filas
+    def row(name, v100, vpp, unit, bold=False, indent=False):
+        label = name if not indent else f"&nbsp;&nbsp;{name}"
+        pstyle = style_cell_bold if bold else style_cell
+        return [
+            Paragraph(label, pstyle),
+            Paragraph(f"{v100:.1f} {unit}" if unit != "mg" else f"{int(round(v100))} mg", style_cell),
+            Paragraph(f"{vpp:.1f} {unit}"  if unit != "mg" else f"{int(round(vpp))} mg", style_cell),
+        ]
 
-    # Encabezados de columnas (NORMAL, SIN NEGRILLA)
-    y -= 6 * mm
-    c.setFont(f_reg, sz_header)
-    c.drawString(col100_left_x + 2 * mm, y, f"Por 100 {unidad_100}")
-    c.drawString(colpor_left_x + 2 * mm, y, f"Por porción ({int(porcion_val)} {unidad_100})")
+    # Nutrientes (orden 810)
+    data.append(row("Grasa total", fat_total_100, fat_total_pp, "g", bold=False))
+    data.append(row("Grasa saturada", sat_fat_100, sat_fat_pp, "g", bold=True, indent=True))
+    data.append(row("Grasas trans", trans_fat_100, trans_fat_pp, "g", bold=True, indent=True))
 
-    # Subrayado de encabezados
-    y -= 3 * mm
-    c.setLineWidth(0.5)
-    c.line(table_x, y, table_x + table_w, y)
+    data.append(row("Carbohidratos", carb_100, carb_pp, "g", bold=False))
+    data.append(row("Azúcares totales", sugars_total_100, sugars_total_pp, "g", bold=False, indent=True))
+    data.append(row("Azúcares añadidos", sugars_added_100, sugars_added_pp, "g", bold=True, indent=True))
+    data.append(row("Fibra dietaria", fiber_100, fiber_pp, "g", bold=False, indent=True))
 
-    # POSICIÓN INICIAL PARA FILAS
-    y_start_content = y - 4 * mm
-    y = y_start_content
+    data.append(row("Proteína", protein_100, protein_pp, "g", bold=False))
+    # Sodio en mg sin decimales
+    data.append(row("Sodio", sodium_100_mg, sodium_pp_mg, "mg", bold=True))
 
-    # DEFINIR NUTRIENTES QUE VAN EN NEGRILLA (según norma)
-    # Solo los nutrientes principales que requieren sellos van en negrilla
-    nutrients_bold = {
-        "Calorías (kcal)", 
-        "Grasa total", 
-        "Grasa saturada", 
-        "Grasas trans", 
-        "Carbohidratos totales", 
-        "Azúcares añadidos", 
-        "Sodio"
-    }
-    
-    # Nutrientes con indentación
-    nutrients_indented = {
-        "  Grasa poliinsaturada", "  Grasa monoinsaturada", "  Grasa saturada", 
-        "  Grasas trans", "  Fibra dietaria", "  Azúcares totales", "  Azúcares añadidos"
-    }
+    # Línea de separación para vitaminas/minerales
+    if selected_vm:
+        data.append(["", "", ""])  # fila vacía para dibujar línea arriba
 
-    # DIBUJAR LÍNEAS VERTICALES COMPLETAS
-    c.setLineWidth(0.5)
-    y_top_vertical = table_y + table_h - 2 * mm
-    y_bottom_vertical = table_y + 2 * mm
-    
-    # Líneas verticales
-    c.line(table_x, y_bottom_vertical, table_x, y_top_vertical)  # Izquierda
-    c.line(name_col_right_x, y_bottom_vertical, name_col_right_x, y_top_vertical)  # Entre nombre y valores
-    c.line(col100_right_x, y_bottom_vertical, col100_right_x, y_top_vertical)  # Entre columnas de valores
-    c.line(table_x + table_w, y_bottom_vertical, table_x + table_w, y_top_vertical)  # Derecha
+        for vm in selected_vm:
+            unit = "mg"
+            if "µg" in vm:
+                unit = "µg"
+            name_clean = vm.split(" (")[0]
+            v100 = vm_100.get(vm, 0.0)
+            vpp  = vm_pp.get(vm, 0.0)
+            data.append(row(name_clean, v100, vpp, unit, bold=False))
 
-    # DIBUJAR FILAS DE CONTENIDO
-    row_height_pt = row_h_mm * mm
-    
-    for i, (name, v100, vpor) in enumerate(rows):
-        # Saltar filas espaciadoras
-        if name == "" and v100 == "" and vpor == "":
-            y -= row_height_pt
-            continue
+    # Pie opcional
+    if footnote_ns.strip():
+        data.append([
+            Paragraph(footnote_ns, style_cell),
+            "", ""
+        ])
 
-        # DEFINIR FORMATO SEGÚN NUTRIENTE
-        nutrient_name = name.strip()
-        
-        # Aplicar negrilla SOLO a nutrientes específicos
-        if nutrient_name in nutrients_bold:
-            c.setFont(f_bold, sz_bold)
-        else:
-            c.setFont(f_reg, sz_text)
+    # Tabla reportlab
+    col_widths = [110*mm, 85*mm, 85*mm]  # suficiente para conectar líneas al borde sin espacios
+    t = Table(data, colWidths=col_widths, hAlign="LEFT", repeatRows=0)
 
-        # Dibujar nombre del nutriente
-        name_x = table_x + left_inner_margin_mm * mm + 1 * mm
-        c.drawString(name_x, y, name)
+    # Estilos: B/N, bordes conectados, línea superior gruesa antes de calorías, negrillas en cabecera
+    style_cmds = [
+        # Marco externo
+        ("BOX", (0,0), (-1,-1), 1.2, colors.black),
+        # Rejilla vertical interna
+        ("LINEBEFORE", (1,0), (1,-1), 1.0, colors.black),
+        ("LINEBEFORE", (2,0), (2,-1), 1.0, colors.black),
 
-        # Dibujar valores (mismo formato que el nombre)
-        pad_right = 2 * mm
-        x_right_100 = col100_right_x - pad_right
-        x_right_por = colpor_right_x - pad_right
+        # Cabecera "Información Nutricional"
+        ("SPAN", (0,0), (2,0)),
+        ("FONTNAME", (0,0), (0,0), "Helvetica-Bold"),
+        ("FONTSIZE", (0,0), (2,0), 12),
+        ("BOTTOMPADDING", (0,0), (2,0), 6),
+        ("LINEBELOW", (0,0), (2,0), 1.2, colors.black),
 
-        v100s = v100 if v100 is not None else ""
-        vpors = vpor if vpor is not None else ""
+        # Fila tamaño de porción / porciones por envase
+        ("SPAN", (0,1), (2,1)),
+        ("LINEBELOW", (0,1), (2,1), 1.2, colors.black),
 
-        if v100s != "":
-            c.drawRightString(x_right_100, y, v100s)
-        if vpors != "":
-            c.drawRightString(x_right_por, y, vpors)
+        # Línea gruesa antes de calorías
+        ("LINEABOVE", (0,2), (2,2), 1.5, colors.black),
 
-        # LÍNEA HORIZONTAL DESPUÉS DE CADA FILA
-        y_next = y - row_height_pt
-        
-        # Definir grosor de línea según posición
-        if nutrient_name == "Sodio":
-            # Línea gruesa después de sodio
-            line_width = 1.0
-        elif i == len(rows) - 1 or (i < len(rows) - 1 and rows[i+1][0].strip() in nutrients_bold and rows[i+1][0].strip() != "Calorías (kcal)"):
-            # Línea gruesa antes de nutrientes importantes (excepto calorías)
-            line_width = 1.0
-        else:
-            # Línea normal
-            line_width = 0.5
-        
-        c.setLineWidth(line_width)
-        c.line(table_x, y_next + mm2pt(1), table_x + table_w, y_next + mm2pt(1))
-        
-        # Actualizar posición Y
-        y = y_next
+        # Encabezados de columnas (per100 / per porción)
+        ("FONTNAME", (0,3), (2,3), "Helvetica-Bold"),
+        ("LINEBELOW", (0,3), (2,3), 0.8, colors.black),
 
-    # FRASE "No es fuente significativa..." en la parte inferior
-    if no_signif_text:
-        ns_y = table_y + 5 * mm
-        c.setFont(f_reg, 7)
-        ns_wrap = textwrap.wrap(no_signif_text, width=80)
-        for i, line in enumerate(ns_wrap):
-            c.drawString(table_x + left_inner_margin_mm * mm, ns_y - (i * 3 * mm), line)
+        # Alineación derecha para cantidades
+        ("ALIGN", (1,0), (2,-1), "RIGHT"),
 
-    c.showPage()
-    c.save()
+        # Paddings
+        ("LEFTPADDING", (0,0), (-1,-1), 6),
+        ("RIGHTPADDING", (0,0), (-1,-1), 6),
+        ("TOPPADDING", (0,0), (-1,-1), 4),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 4),
+    ]
+
+    # Línea separadora antes de vitaminas/minerales (si existen)
+    if selected_vm:
+        # La fila justo antes del bloque VM es la primera del bloque VM; dibujamos una línea superior gruesa
+        # Buscamos el índice donde empieza VM: es después de los nutrientes base + 1 fila vacía
+        # Nutrientes base: 1 título + 1 porción + 1 calorías + 1 encabezado columnas + 8 líneas nutrientes + 1 sodio = 12 filas hasta sodio
+        # Precálculo robusto: localizamos la fila vacía que insertamos antes de VM
+        vm_start_row = None
+        for i, row in enumerate(data):
+            if row == ["", "", ""]:
+                vm_start_row = i
+                break
+        if vm_start_row is not None:
+            style_cmds.append(("LINEABOVE", (0, vm_start_row), (2, vm_start_row), 1.2, colors.black))
+
+    # Pie de “No es fuente significativa…” sin línea especial extra (queda dentro de caja)
+    t.setStyle(TableStyle(style_cmds))
+    story.append(t)
+
+    # Pie de página simple (fecha)
+    story.append(Spacer(1, 6))
+    story.append(Paragraph(f"Fecha de generación: {datetime.now().strftime('%Y-%m-%d')}", style_cell))
+
+    doc.build(story)
     buf.seek(0)
     return buf
 
-# -------------------------
-# Generate button
-# -------------------------
-st.markdown("---")
-if st.button("Generar y descargar PDF"):
-    if not main_selected:
-        st.error("Debe seleccionar al menos un nutriente principal.")
-    else:
-        with st.spinner("Generando PDF..."):
-            pdfbuf = generar_pdf(rows, no_signif_text, table_width_mm=100)
-            st.success("PDF generado correctamente!")
-            st.download_button(
-                "Descargar tabla nutricional (PDF)", 
-                data=pdfbuf, 
-                file_name="tabla_nutricional.pdf", 
-                mime="application/pdf"
-            )
+st.header("Exportar")
+col_btn_pdf, _ = st.columns([0.4, 0.6])
+with col_btn_pdf:
+    if st.button("Generar PDF en blanco y negro"):
+        pdf_buf = build_pdf_buffer()
+        fname_base = f"tabla_nutricional_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        st.download_button(
+            "Descargar PDF",
+            data=pdf_buf,
+            file_name=f"{fname_base}.pdf",
+            mime="application/pdf"
+        )
