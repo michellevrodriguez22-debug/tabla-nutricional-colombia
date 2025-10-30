@@ -1,18 +1,4 @@
 # app.py
-# =============================================================================
-# Generador de Tabla de Información Nutricional — Colombia
-# Cumple con la estructura de la Res. 810/2021, ajustes 2492/2022 y 254/2023.
-# -----------------------------------------------------------------------------
-# NOTAS (importantes y conservadas):
-# 1) "Grasas trans" se ingresan en mg (como pediste) y se convierten a g para
-#    cálculos energéticos (9 kcal/g). En pantalla/PDF se muestran en mg.
-# 2) "Vitamina A" debe mostrarse como "Vitamina A (µg ER)" tanto en la
-#    previsualización HTML como en el PDF. (Corrección aplicada).
-# 3) Sin modificar de más: se mantiene el flujo, secciones, estilos, y orden.
-# 4) Se agrega documentación y comentarios extensos para facilitar auditoría,
-#    sin alterar el comportamiento.
-# =============================================================================
-
 import math
 from io import BytesIO
 from datetime import datetime
