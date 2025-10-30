@@ -20,8 +20,18 @@ st.title("🧾 Generador de Tabla Nutricional — Basado en las Resoluciones 810
 # FUNCIÓN DE RENDERIZADO SEGURO HTML
 # -----------------------------------------------------------
 def render_html(html: str):
-    """Renderiza HTML como tabla real en Streamlit."""
-    st.markdown(html, unsafe_allow_html=True)
+    html += "</table>"
+
+    # --- FIX de renderizado seguro ---
+    def render_html_safely(raw_html: str):
+        """Evita errores de import JS y renderiza HTML sin romper el frontend"""
+        try:
+            st.components.v1.html(raw_html, height=600, scrolling=True)
+        except Exception:
+            st.markdown(raw_html, unsafe_allow_html=True)
+
+    render_html_safely(html)
+
 
 # -----------------------------------------------------------
 # ESTILOS CSS SEGÚN REQUISITOS DE LA RESOLUCIÓN
