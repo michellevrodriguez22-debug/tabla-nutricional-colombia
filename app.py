@@ -93,7 +93,7 @@ include_kj = st.sidebar.checkbox("Mostrar también kJ (opcional)", value=True)
 # Vitaminas/minerales (multi-selección)
 st.sidebar.header("Vitaminas y minerales a declarar (opcional)")
 vm_options = [
-    "Vitamina A (µg RE)",  # Se mostrará como µg ER en pantalla/PDF
+    "Vitamina A (µg ER)",  # Se mostrará como µg ER en pantalla/PDF
     "Vitamina D (µg)",
     "Calcio (mg)",
     "Hierro (mg)",
@@ -107,7 +107,7 @@ vm_options = [
 selected_vm = st.sidebar.multiselect(
     "Selecciona micronutrientes a incluir",
     vm_options,
-    default=["Vitamina A (µg RE)", "Vitamina D (µg)", "Calcio (mg)", "Hierro (mg)", "Zinc (mg)"]
+    default=["Vitamina A (µg ER)", "Vitamina D (µg)", "Calcio (mg)", "Hierro (mg)", "Zinc (mg)"]
 )
 
 # Frase opcional de "No es fuente significativa de..."
@@ -334,7 +334,7 @@ with col_preview_left:
 
             # ✅ Etiqueta especial para Vitamina A con "µg ER"
             if vm.startswith("Vitamina A"):
-                display_name = "Vitamina A (µg ER)"
+                display_name = "Vitamina A"
             else:
                 # Mantener etiqueta según selección (no quitamos unidades para no cambiar tu UI)
                 display_name = vm
