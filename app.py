@@ -307,7 +307,7 @@ with col_preview_left:
         """
 
     html += row_line("Grasa total", fat_total_100, fat_total_pp, "g", bold=False)
-    html += row_line("  de las cuales Grasa saturada", sat_fat_100, sat_fat_pp, "g", bold=True)
+    html += row_line("Grasa saturada", sat_fat_100, sat_fat_pp, "g", bold=True)
     # ✅ Mostrar trans en mg (pero los cálculos energéticos ya usan g)
     html += row_line("  Grasas trans", trans_fat_100*1000.0, trans_fat_pp*1000.0, "mg", bold=True)
 
@@ -466,7 +466,7 @@ def build_pdf_buffer():
 
             # ✅ Mostrar etiqueta especial para Vitamina A con "µg ER"
             if vm.startswith("Vitamina A"):
-                display_name = "Vitamina A (µg ER)"
+                display_name = "Vitamina A"
             else:
                 # Quitamos la unidad del nombre para no duplicarla (PDF ya pone la unidad al final)
                 display_name = vm.split(" (")[0]
