@@ -93,7 +93,7 @@ include_kj = st.sidebar.checkbox("Mostrar también kJ (opcional)", value=True)
 # Vitaminas/minerales (multi-selección)
 st.sidebar.header("Vitaminas y minerales a declarar (opcional)")
 vm_options = [
-    "Vitamina A (µg RE)",
+    "Vitamina A (µg RE)",  # Se mostrará como µg ER en pantalla/PDF
     "Vitamina D (µg)",
     "Calcio (mg)",
     "Hierro (mg)",
@@ -104,7 +104,11 @@ vm_options = [
     "Vitamina B12 (µg)",
     "Ácido fólico (µg)",
 ]
-selected_vm = st.sidebar.multiselect("Selecciona micronutrientes a incluir", vm_options, default=["Vitamina A (µg RE)", "Vitamina D (µg)", "Calcio (mg)", "Hierro (mg)", "Zinc (mg)"])
+selected_vm = st.sidebar.multiselect(
+    "Selecciona micronutrientes a incluir",
+    vm_options,
+    default=["Vitamina A (µg RE)", "Vitamina D (µg)", "Calcio (mg)", "Hierro (mg)", "Zinc (mg)"]
+)
 
 # Frase opcional de "No es fuente significativa de..."
 footnote_ns = st.sidebar.text_input("Frase al pie (opcional)", value="No es fuente significativa de _____.")
@@ -121,7 +125,10 @@ with c1:
     st.subheader("Macronutrientes")
     fat_total_input = as_num(st.text_input("Grasa total (g)", value="5"))
     sat_fat_input   = as_num(st.text_input("Grasa saturada (g)", value="2"))
-    trans_fat_input = as_num(st.text_input("Grasas trans (g)", value="0"))
+    # ✅ Ingreso en mg (como pediste). Se convertirá a g para cálculos energéticos.
+    trans_fat_input_mg = as_num(st.text_input("Grasas trans (mg)", value="0"))
+    trans_fat_input = trans_fat_input_mg / 1000.0  # g para cálculos
+
     carb_input      = as_num(st.text_input("Carbohidratos totales (g)", value="20"))
     sugars_total_input  = as_num(st.text_input("Azúcares totales (g)", value="10"))
     sugars_added_input  = as_num(st.text_input("Azúcares añadidos (g)", value="8"))
@@ -142,44 +149,44 @@ if input_basis == "Por porción":
     # Base: por porción -> calcular por 100
     fat_total_pp = fat_total_input
     sat_fat_pp   = sat_fat_input
-    trans_fat_pp = trans_fat_input
+    trans_fat_pp = trans_fat_input               # g
     carb_pp      = carb_input
     sugars_total_pp = sugars_total_input
     sugars_added_pp = sugars_added_input
     fiber_pp     = fiber_input
     protein_pp   = protein_input
-    sodium_pp_mg = sodium_input_mg
+    sodium_pp_mg = sodium_input_mg               # mg
 
     fat_total_100 = per100_from_portion(fat_total_pp, portion_size)
     sat_fat_100   = per100_from_portion(sat_fat_pp, portion_size)
-    trans_fat_100 = per100_from_portion(trans_fat_pp, portion_size)
+    trans_fat_100 = per100_from_portion(trans_fat_pp, portion_size)   # g
     carb_100      = per100_from_portion(carb_pp, portion_size)
     sugars_total_100 = per100_from_portion(sugars_total_pp, portion_size)
     sugars_added_100 = per100_from_portion(sugars_added_pp, portion_size)
     fiber_100     = per100_from_portion(fiber_pp, portion_size)
     protein_100   = per100_from_portion(protein_pp, portion_size)
-    sodium_100_mg = per100_from_portion(sodium_pp_mg, portion_size)
+    sodium_100_mg = per100_from_portion(sodium_pp_mg, portion_size)   # mg
 else:
     # Base: por 100 -> calcular por porción
     fat_total_100 = fat_total_input
     sat_fat_100   = sat_fat_input
-    trans_fat_100 = trans_fat_input
+    trans_fat_100 = trans_fat_input   # g
     carb_100      = carb_input
     sugars_total_100 = sugars_total_input
     sugars_added_100 = sugars_added_input
     fiber_100     = fiber_input
     protein_100   = protein_input
-    sodium_100_mg = sodium_input_mg
+    sodium_100_mg = sodium_input_mg   # mg
 
     fat_total_pp = portion_from_per100(fat_total_100, portion_size)
     sat_fat_pp   = portion_from_per100(sat_fat_100, portion_size)
-    trans_fat_pp = portion_from_per100(trans_fat_100, portion_size)
+    trans_fat_pp = portion_from_per100(trans_fat_100, portion_size)   # g
     carb_pp      = portion_from_per100(carb_100, portion_size)
     sugars_total_pp = portion_from_per100(sugars_total_100, portion_size)
     sugars_added_pp = portion_from_per100(sugars_added_100, portion_size)
     fiber_pp     = portion_from_per100(fiber_100, portion_size)
     protein_pp   = portion_from_per100(protein_100, portion_size)
-    sodium_pp_mg = portion_from_per100(sodium_100_mg, portion_size)
+    sodium_pp_mg = portion_from_per100(sodium_100_mg, portion_size)   # mg
 
 # Vitaminas/minerales: normalizar también
 vm_pp = {}
@@ -301,7 +308,8 @@ with col_preview_left:
 
     html += row_line("Grasa total", fat_total_100, fat_total_pp, "g", bold=False)
     html += row_line("  de las cuales Grasa saturada", sat_fat_100, sat_fat_pp, "g", bold=True)
-    html += row_line("  Grasas trans", trans_fat_100, trans_fat_pp, "g", bold=True)
+    # ✅ Mostrar trans en mg (pero los cálculos energéticos ya usan g)
+    html += row_line("  Grasas trans", trans_fat_100*1000.0, trans_fat_pp*1000.0, "mg", bold=True)
 
     html += row_line("Carbohidratos", carb_100, carb_pp, "g", bold=False)
     html += row_line("  Azúcares totales", sugars_total_100, sugars_total_pp, "g", bold=False)
@@ -321,11 +329,17 @@ with col_preview_left:
             unit = "mg"
             if "µg" in vm:
                 unit = "µg"
-            if "Potasio" in vm:
-                unit = "mg"
             v100 = vm_100.get(vm, 0.0)
             vpp  = vm_pp.get(vm, 0.0)
-            html += row_line(vm.replace(" (µg RE)", "").replace(" (µg)", "").replace(" (mg)", ""), v100, vpp, unit, bold=False)
+
+            # ✅ Etiqueta especial para Vitamina A con "µg ER"
+            if vm.startswith("Vitamina A"):
+                display_name = "Vitamina A (µg ER)"
+            else:
+                # Mantener etiqueta según selección (no quitamos unidades para no cambiar tu UI)
+                display_name = vm
+
+            html += row_line(display_name, v100, vpp, unit, bold=False)
 
     if footnote_ns.strip():
         html += f"""
@@ -336,8 +350,8 @@ with col_preview_left:
 
     html += "</table>"
 
+    # Render robusto (evita fallo de JS dinámico en algunos despliegues)
     def render_html_safely(raw_html: str):
-        """Evita errores de import JS y renderiza HTML sin romper el frontend"""
         try:
             st.components.v1.html(raw_html, height=600, scrolling=True)
         except Exception:
@@ -379,7 +393,6 @@ def build_pdf_buffer():
     story.append(Spacer(1, 4))
 
     # Construcción de la tabla normativa (recuadro)
-    # Encabezado de caja
     per100_label = "por 100 g" if not is_liquid else "por 100 mL"
     perportion_label = f"por porción ({int(round(portion_size))} {portion_unit})"
 
@@ -395,9 +408,7 @@ def build_pdf_buffer():
         Paragraph(f"Tamaño de porción: {int(round(portion_size))} {portion_unit}<br/>Porciones por envase: {int(round(servings_per_pack))}", style_cell),
         "", ""
     ])
-    # Línea separadora gruesa antes de calorías
-    # (la definiremos vía TableStyle con LINEABOVE en la fila de calorías)
-    # Calorías (negrilla 1.3×)
+    # Calorías (negrilla 1.3×) con línea gruesa arriba
     kcal_100_txt = f"{int(round(kcal_100))} kcal" + (f" ({int(round(kj_100))} kJ)" if include_kj else "")
     kcal_pp_txt = f"{int(round(kcal_pp))} kcal" + (f" ({int(round(kj_pp))} kJ)" if include_kj else "")
     data.append([
@@ -416,16 +427,20 @@ def build_pdf_buffer():
     def row(name, v100, vpp, unit, bold=False, indent=False):
         label = name if not indent else f"&nbsp;&nbsp;{name}"
         pstyle = style_cell_bold if bold else style_cell
-        return [
-            Paragraph(label, pstyle),
-            Paragraph(f"{v100:.1f} {unit}" if unit != "mg" else f"{int(round(v100))} mg", style_cell),
-            Paragraph(f"{vpp:.1f} {unit}"  if unit != "mg" else f"{int(round(vpp))} mg", style_cell),
-        ]
+        # mg sin decimales; g con 1 decimal
+        if unit == "mg":
+            v100_txt = f"{int(round(v100))} mg"
+            vpp_txt  = f"{int(round(vpp))} mg"
+        else:
+            v100_txt = f"{v100:.1f} {unit}"
+            vpp_txt  = f"{vpp:.1f} {unit}"
+        return [Paragraph(label, pstyle), Paragraph(v100_txt, style_cell), Paragraph(vpp_txt, style_cell)]
 
     # Nutrientes (orden 810)
     data.append(row("Grasa total", fat_total_100, fat_total_pp, "g", bold=False))
     data.append(row("Grasa saturada", sat_fat_100, sat_fat_pp, "g", bold=True, indent=True))
-    data.append(row("Grasas trans", trans_fat_100, trans_fat_pp, "g", bold=True, indent=True))
+    # ✅ Trans en mg (convertimos desde g)
+    data.append(row("Grasas trans", trans_fat_100*1000.0, trans_fat_pp*1000.0, "mg", bold=True, indent=True))
 
     data.append(row("Carbohidratos", carb_100, carb_pp, "g", bold=False))
     data.append(row("Azúcares totales", sugars_total_100, sugars_total_pp, "g", bold=False, indent=True))
@@ -433,7 +448,6 @@ def build_pdf_buffer():
     data.append(row("Fibra dietaria", fiber_100, fiber_pp, "g", bold=False, indent=True))
 
     data.append(row("Proteína", protein_100, protein_pp, "g", bold=False))
-    # Sodio en mg sin decimales
     data.append(row("Sodio", sodium_100_mg, sodium_pp_mg, "mg", bold=True))
 
     # Línea de separación para vitaminas/minerales
@@ -441,20 +455,27 @@ def build_pdf_buffer():
         data.append(["", "", ""])  # fila vacía para dibujar línea arriba
 
         for vm in selected_vm:
+            # Unidad por tipo
             unit = "mg"
             if "µg" in vm:
                 unit = "µg"
-            name_clean = vm.split(" (")[0]
+
+            # Valores
             v100 = vm_100.get(vm, 0.0)
             vpp  = vm_pp.get(vm, 0.0)
-            data.append(row(name_clean, v100, vpp, unit, bold=False))
+
+            # ✅ Mostrar etiqueta especial para Vitamina A con "µg ER"
+            if vm.startswith("Vitamina A"):
+                display_name = "Vitamina A (µg ER)"
+            else:
+                # Quitamos la unidad del nombre para no duplicarla (PDF ya pone la unidad al final)
+                display_name = vm.split(" (")[0]
+
+            data.append(row(display_name, v100, vpp, unit, bold=False))
 
     # Pie opcional
     if footnote_ns.strip():
-        data.append([
-            Paragraph(footnote_ns, style_cell),
-            "", ""
-        ])
+        data.append([Paragraph(footnote_ns, style_cell), "", ""])
 
     # Tabla reportlab
     col_widths = [110*mm, 85*mm, 85*mm]  # suficiente para conectar líneas al borde sin espacios
@@ -498,19 +519,14 @@ def build_pdf_buffer():
 
     # Línea separadora antes de vitaminas/minerales (si existen)
     if selected_vm:
-        # La fila justo antes del bloque VM es la primera del bloque VM; dibujamos una línea superior gruesa
-        # Buscamos el índice donde empieza VM: es después de los nutrientes base + 1 fila vacía
-        # Nutrientes base: 1 título + 1 porción + 1 calorías + 1 encabezado columnas + 8 líneas nutrientes + 1 sodio = 12 filas hasta sodio
-        # Precálculo robusto: localizamos la fila vacía que insertamos antes de VM
         vm_start_row = None
-        for i, row in enumerate(data):
-            if row == ["", "", ""]:
+        for i, row_vals in enumerate(data):
+            if row_vals == ["", "", ""]:
                 vm_start_row = i
                 break
         if vm_start_row is not None:
             style_cmds.append(("LINEABOVE", (0, vm_start_row), (2, vm_start_row), 1.2, colors.black))
 
-    # Pie de “No es fuente significativa…” sin línea especial extra (queda dentro de caja)
     t.setStyle(TableStyle(style_cmds))
     story.append(t)
 
@@ -522,6 +538,9 @@ def build_pdf_buffer():
     buf.seek(0)
     return buf
 
+# =======================================
+# Exportar
+# =======================================
 st.header("Exportar")
 col_btn_pdf, _ = st.columns([0.4, 0.6])
 with col_btn_pdf:
