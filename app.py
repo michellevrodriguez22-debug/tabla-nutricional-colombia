@@ -610,4 +610,3 @@ if export_btn:
     buf.seek(0)
     fname = f"tabla_nutricional_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
     st.download_button("Descargar PNG", data=buf, file_name=fname, mime="image/png")
-
