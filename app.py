@@ -335,6 +335,19 @@ with st.expander("Resultado de validación informativa (no se imprime)", expande
     with colf3:
         st.write(f"Contiene edulcorantes: **{'Sí' if fop_sweet else 'No'}**")
 
+
+# ============================================================
+# FUNCIÓN PARA CARGAR FUENTES (añadida para corregir NameError)
+# ============================================================
+from PIL import ImageFont
+
+def get_font(size, bold=False):
+    try:
+        font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+        return ImageFont.truetype(font_path, size)
+    except:
+        return ImageFont.load_default()
+
 # ============================================================
 # ESTILO GRÁFICO
 # ============================================================
