@@ -348,6 +348,20 @@ def get_font(size, bold=False):
     except:
         return ImageFont.load_default()
 
+
+# ============================================================
+# FUNCIONES DE DIBUJO BÁSICAS (añadidas para evitar NameError)
+# ============================================================
+def draw_hline(draw, x0, x1, y, color, width):
+    draw.line((x0, y, x1, y), fill=color, width=width)
+
+def draw_vline(draw, x, y0, y1, color, width):
+    draw.line((x, y0, x, y1), fill=color, width=width)
+
+def text_size(draw, text, font):
+    bbox = draw.textbbox((0, 0), text, font=font)
+    return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
 # ============================================================
 # ESTILO GRÁFICO
 # ============================================================
