@@ -219,12 +219,12 @@ vm_col1, vm_col2 = st.columns([0.5, 0.5])
 with vm_col1:
     for i, vm in enumerate(selected_vm):
         if i % 2 == 0:
-            unit = "µg" if vm in ("Vitamina A","Vitamina D","Vitamina B12") else "mg"
+            unit = ("µg ER" if vm == "Vitamina A" else ("µg" if vm in ("Vitamina D","Vitamina B12") else "mg"))
             vm_values[(vm, unit)] = as_num(st.text_input(f"{vm} ({unit}/100)", value="0"))
 with vm_col2:
     for i, vm in enumerate(selected_vm):
         if i % 2 == 1:
-            unit = "µg" if vm in ("Vitamina A","Vitamina D","Vitamina B12") else "mg"
+            unit = ("µg ER" if vm == "Vitamina A" else ("µg" if vm in ("Vitamina D","Vitamina B12") else "mg"))
             vm_values[(vm, unit)] = as_num(st.text_input(f"{vm} ({unit}/100)", value="0"))
 
 # ============================================================
@@ -250,11 +250,9 @@ kcal_pp_raw  = kcal_from_macros(fat_total_pp,  carb_pp,  protein_pp)
 
 # Aplicar “no significativas” por nutriente (criterios prácticos)
 def nonsig_zero_g(name, v):
-    # Ajuste: NO anular Azúcares totales con 0.5; usar 0.1 para permitir 0.3 g, etc.
+    # Cero solo para grasas clave; no anular carbohidratos/azúcares/fibra/proteína
     if name == "Grasa total" and v < 0.5: return 0.0
     if name in ("Grasa saturada","Grasas trans") and v < 0.1: return 0.0
-    if name == "Azúcares totales" and v < 0.1: return 0.0
-    if name in ("Carbohidratos totales","Azúcares añadidos","Fibra dietaria","Proteína") and v < 0.5: return 0.0
     return v
 
 def nonsig_zero_mg(name, vmg):
@@ -334,33 +332,6 @@ with st.expander("Resultado de validación informativa (no se imprime)", expande
         st.write(f"Sodio (criterio aplicable): **{'Sí' if fop_sodium else 'No'}**")
     with colf3:
         st.write(f"Contiene edulcorantes: **{'Sí' if fop_sweet else 'No'}**")
-
-
-# ============================================================
-# FUNCIÓN PARA CARGAR FUENTES (añadida para corregir NameError)
-# ============================================================
-from PIL import ImageFont
-
-def get_font(size, bold=False):
-    try:
-        font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-        return ImageFont.truetype(font_path, size)
-    except:
-        return ImageFont.load_default()
-
-
-# ============================================================
-# FUNCIONES DE DIBUJO BÁSICAS (añadidas para evitar NameError)
-# ============================================================
-def draw_hline(draw, x0, x1, y, color, width):
-    draw.line((x0, y, x1, y), fill=color, width=width)
-
-def draw_vline(draw, x, y0, y1, color, width):
-    draw.line((x, y0, x, y1), fill=color, width=width)
-
-def text_size(draw, text, font):
-    bbox = draw.textbbox((0, 0), text, font=font)
-    return bbox[2] - bbox[0], bbox[3] - bbox[1]
 
 # ============================================================
 # ESTILO GRÁFICO
@@ -551,7 +522,7 @@ def draw_fig1():
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
     draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)  # entre nombre y valores
     draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[3], data_top, data_bottom, TEXT_COLOR, GRID_W)
+    # (removida) línea vertical final
 
     # ------- BLOQUE CALORÍAS (celda combinada, sin línea media que corte texto) -------
     kcal_100_txt = f"{fmt_int(kcal_100)}"
@@ -573,8 +544,6 @@ def draw_fig1():
         d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
-    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
     # micronutrientes
     if show_micro:
         for label, v100, vpp, indent, _, _ in rows_micro:
@@ -593,9 +562,8 @@ def draw_fig1():
 
     # pie (opcional)
     if footnote_tail.strip():
-        d.text((BORDER_W + CELL_PAD_X, y + 20),
-               f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}",
-               fill=TEXT_COLOR, font=FONT_SMALL)
+        if footnote_tail.strip():
+        d.text((BORDER_W + CELL_PAD_X, y + 20), f"No es fuente significativa de {footnote_tail.strip().rstrip(\'.\')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 # ============================================================
@@ -656,7 +624,7 @@ def draw_fig3():
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
     draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)  # vertical extra
     draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[3], data_top, data_bottom, TEXT_COLOR, GRID_W)
+    # (removida) línea vertical final
 
     # Calorías (celda combinada)
     y = draw_calories_combined_row(d, W, y+1, col_x, fmt_int(kcal_100), fmt_int(kcal_pp))
@@ -678,9 +646,8 @@ def draw_fig3():
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
     if footnote_tail.strip():
-        d.text((BORDER_W + CELL_PAD_X, y + 20),
-               f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}",
-               fill=TEXT_COLOR, font=FONT_SMALL)
+        if footnote_tail.strip():
+        d.text((BORDER_W + CELL_PAD_X, y + 20), f"No es fuente significativa de {footnote_tail.strip().rstrip(\'.\')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 # ============================================================
@@ -736,7 +703,7 @@ def draw_fig4():
     data_bottom_limit = H - BORDER_W - foot_h - GRID_W_THICK
     draw_vline(d, col_x[1], y, data_bottom_limit, TEXT_COLOR, GRID_W)  # vertical extra
     draw_vline(d, col_x[2], y, data_bottom_limit, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[3], y, data_bottom_limit, TEXT_COLOR, GRID_W)
+    # (removida) línea vertical final
 
     # Calorías (celda combinada)
     y = draw_calories_combined_row(d, W, y+1, col_x, fmt_int(kcal_100), fmt_int(kcal_pp))
@@ -774,9 +741,8 @@ def draw_fig4():
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
     if footnote_tail.strip():
-        d.text((BORDER_W + CELL_PAD_X, y + 20),
-               f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}",
-               fill=TEXT_COLOR, font=FONT_SMALL)
+        if footnote_tail.strip():
+        d.text((BORDER_W + CELL_PAD_X, y + 20), f"No es fuente significativa de {footnote_tail.strip().rstrip(\'.\')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 # ============================================================
@@ -788,77 +754,83 @@ def draw_fig5():
     def pair(name, vpp, v100):
         items.append(f"{name}: {vpp} (por 100: {v100})")
 
-    pair("Calorías", f"{fmt_int(kcal_pp)} kcal", f"{fmt_int(kcal_100)} kcal")
-    pair("Grasa total", f"{fmt_one_decimal(fat_total_pp_r)} g", f"{fmt_one_decimal(fat_total_100_r)} g")
-    pair("Grasa saturada", f"{fmt_one_decimal(sat_fat_pp_r)} g", f"{fmt_one_decimal(sat_fat_100_r)} g")
-    pair("Grasas trans", f"{fmt_int(trans_fat_pp_mg_r)} mg", f"{fmt_int(trans_fat_100_mg_r)} mg")
-    pair("Carbohidratos totales", f"{fmt_carbs_rule(carb_pp_r)} g", f"{fmt_carbs_rule(carb_100_r)} g")
-    pair("Azúcares totales", f"{fmt_one_decimal(sug_total_pp_r)} g", f"{fmt_one_decimal(sug_total_100_r)} g")
-    pair("Azúcares añadidos", f"{fmt_one_decimal(sug_added_pp_r)} g", f"{fmt_one_decimal(sug_added_100_r)} g")
-    pair("Fibra dietaria", f"{fmt_one_decimal(fiber_pp_r)} g", f"{fmt_one_decimal(fiber_100_r)} g")
-    pair("Proteína", f"{fmt_one_decimal(protein_pp_r)} g", f"{fmt_one_decimal(protein_100_r)} g")
-    pair("Sodio", f"{fmt_int(sodium_pp_mg_r)} mg", f"{fmt_int(sodium_100_mg_r)} mg")
+    pair("Calorías", f"{fmt_kcal(kcal_pp)} kcal", f"{fmt_kcal(kcal_100)} kcal")
+    pair("Grasa total", f"{round(fat_total_pp,1):.1f} g", f"{round(fat_total_100,1):.1f} g")
+    pair("Grasa saturada", f"{round(sat_fat_pp,1):.1f} g", f"{round(sat_fat_100,1):.1f} g")
+    pair("Grasas trans", f"{fmt_mg(trans_fat_pp_mg)} mg", f"{fmt_mg(trans_fat_100_mg)} mg")
+    pair("Carbohidratos totales", ((f"{round(carb_pp,1):.1f}" if abs(carb_pp)<10 else f"{int(round(carb_pp))}") + " g"),
+         ((f"{round(carb_100,1):.1f}" if abs(carb_100)<10 else f"{int(round(carb_100))}") + " g"))
+    pair("Azúcares totales", f"{round(sug_total_pp,1):.1f} g", f"{round(sug_total_100,1):.1f} g")
+    pair("Azúcares añadidos", f"{round(sug_added_pp,1):.1f} g", f"{round(sug_added_100,1):.1f} g")
+    pair("Fibra dietaria", f"{round(fiber_pp,1):.1f} g", f"{round(fiber_100,1):.1f} g")
+    pair("Proteína", f"{round(protein_pp,1):.1f} g", f"{round(protein_100,1):.1f} g")
+    pair("Sodio", f"{int(round(sodium_pp_mg))} mg", f"{int(round(sodium_100_mg))} mg")
 
-    # Micronutrientes en línea (mismo orden que tabla)
-    for (name, unit) in [("Hierro","mg"),("Calcio","mg"),("Zinc","mg"),("Potasio","mg"),
-                         ("Vitamina A","µg"),("Vitamina D","µg"),("Vitamina C","mg"),
-                         ("Vitamina E","mg"),("Vitamina B1","mg"),("Vitamina B12","µg")]:
-        # Solo si están seleccionados
-        for (n,u) in vm_values_rounded.keys():
-            if n == name:
-                vpp = vm_pp[(n,u)]
-                v100 = vm_values_rounded[(n,u)]
-                items.append(f"{n}: {fmt_micro_value(n,u,vpp)} (por 100: {fmt_micro_value(n,u,v100)})")
-                break
+    for (name, unit), v100 in vm_values.items():
+        vpp  = portion_from_per100(v100, portion_size)
+        unit_out = "µg ER" if name == "Vitamina A" else unit
+        # aplicar regla micro
+        def fmicro_line(v):
+            v = float(v)
+            if name == "Vitamina D":
+                if abs(v) < 1: 
+                    return f"{v:.2f} {unit_out}"
+                elif abs(v) < 100:
+                    return f"{v:.1f} {unit_out}"
+                else:
+                    return f"{int(round(v))} {unit_out}"
+            if abs(v) >= 100:
+                return f"{int(round(v))} {unit_out}"
+            return f"{v:.1f} {unit_out}"
+        pair(name, fmicro_line(vpp), fmicro_line(v100))
 
-    # Crear lienzo
-    W = 1400
-    H = 620
-    img = Image.new("RGB", (W,H), BG_WHITE)
-    d = ImageDraw.Draw(img)
-    d.rectangle([0,0,W-1,H-1], outline=TEXT_COLOR, width=BORDER_W)
-
+    # Canvas dinámico
+    W = 1600
     left_x = BORDER_W + 28
-    y = BORDER_W + 28
+    top_y = BORDER_W + 28
 
-    # Título (fuera del marco que pondremos alrededor del bloque de datos)
-    title_line = f"Información nutricional (por porción): Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})   •   Número de porciones por envase: {int(round(servings_per_pack))}"
-    d.text((left_x, y), title_line, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    y += 52
+    # Medimos líneas
+    from PIL import Image, ImageDraw
+    img_probe = Image.new("RGB", (W, 2000), BG_WHITE)
+    d_probe = ImageDraw.Draw(img_probe)
 
-    # Texto corrido en líneas
-    maxw = W - left_x - 40
+    header_text = f"Información nutricional (por porción): Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})   •   Número de porciones por envase: {int(round(servings_per_pack))}"
+    FONT_HDR = FONT_SMALL_B
+    _, h_hdr = d_probe.textbbox((0,0), header_text, font=FONT_HDR)[2:4]
+    line_h = 46
+
     s = "  •  ".join(items)
     words = s.split(" ")
     line = ""
     lines = []
+    maxw = W - left_x - 30
+    def textw(txt, font): 
+        bbox = d_probe.textbbox((0,0), txt, font=font)
+        return bbox[2]-bbox[0]
     for w in words:
         t = (line + " " + w).strip()
-        if measure_text(d, t, FONT_LABEL)[0] <= maxw:
+        if textw(t, FONT_LABEL) <= maxw:
             line = t
         else:
-            lines.append(line)
-            line = w
-    if line:
-        lines.append(line)
+            lines.append(line); line = w
+    if line: lines.append(line)
 
-    # Guardar inicio del bloque para dibujar marco grueso alrededor SOLO de los datos
-    box_top = y - 10
+    # Altura total
+    H = top_y + h_hdr + 52 + len(lines)*line_h + 30 + 40 + BORDER_W*2
+    img = Image.new("RGB", (W, H), BG_WHITE)
+    d = ImageDraw.Draw(img)
+    # Marco único grueso
+    d.rectangle([0,0,W-1,H-1], outline=TEXT_COLOR, width=GRID_W_THICK)
+
+    y = top_y
+    d.text((left_x, y), header_text, fill=TEXT_COLOR, font=FONT_HDR)
+    y += 52
     for ln in lines:
         d.text((left_x, y), ln, fill=TEXT_COLOR, font=FONT_LABEL)
-        y += 46
-    box_bottom = y + 10
-
-    # Pie opcional dentro del marco si existe
+        y += line_h
+    y += 10
     if footnote_tail.strip():
-        d.text((left_x, y),
-               f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}",
-               fill=TEXT_COLOR, font=FONT_SMALL)
-        box_bottom = y + 36
-
-    # Marco grueso alrededor del bloque de datos (sin incluir título)
-    d.rectangle([left_x-16, box_top, W-28, box_bottom], outline=TEXT_COLOR, width=GRID_W_THICK)
-
+        d.text((left_x, y), f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 # ============================================================
