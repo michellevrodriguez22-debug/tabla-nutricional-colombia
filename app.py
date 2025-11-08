@@ -387,28 +387,21 @@ def draw_fig1():
     draw_vline(d, col_x[3], data_top, data_bottom, TEXT_COLOR, GRID_W)
 
 # Calorías (kcal) con celda combinada verticalmente (como imagen 2)
-y += 1
-draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-y_top_cal = y  # parte superior de la celda combinada
+    y += 1
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
+    y_top_cal = y  # parte superior de la celda combinada
 
-# línea intermedia superior del bloque de calorías
-y += ROW_H // 2
-draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
+    # línea intermedia superior del bloque de calorías
+    y += ROW_H // 2
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
 
-# texto "Calorías (kcal)" centrado verticalmente en las dos medias filas
-d.text((BORDER_W + CELL_PAD_X, y_top_cal + (ROW_H//2) - 14), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
+    # texto "Calorías (kcal)" centrado verticalmente en las dos medias filas
+    d.text((BORDER_W + CELL_PAD_X, y_top_cal + (ROW_H//2) - 14), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
 
-# valores por 100g / por porción
-kc100 = fmt_kcal(kcal_100)
-kcpp  = fmt_kcal(kcal_pp)
-w1, _ = text_size(d, kc100, FONT_LABEL_B)
-w2, _ = text_size(d, kcpp,  FONT_LABEL_B)
-d.text((col_x[2] - CELL_PAD_X - w1, y_top_cal + (ROW_H//2) - 14), kc100, fill=TEXT_COLOR, font=FONT_LABEL_B)
-d.text((col_x[3] - CELL_PAD_X - w2, y_top_cal + (ROW_H//2) - 14), kcpp,  fill=TEXT_COLOR, font=FONT_LABEL_B)
-
-# línea gruesa inferior
-y = y_top_cal + ROW_H
-draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
+    # valores por 100g / por porción
+    kc100 = fmt_kcal(kcal_100)
+    kcpp  = fmt_kcal(kcal_pp)
+    w1, _ =
 
     for label, v100, vpp, indent, bold, _ in rows_nutri:
         y += 1
