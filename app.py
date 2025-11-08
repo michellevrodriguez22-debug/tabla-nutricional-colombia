@@ -1,4 +1,3 @@
-
 # app.py
 # ============================================================
 # Generador de Tabla Nutricional (Colombia) -> PNG (solo PNG)
