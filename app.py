@@ -1,12 +1,10 @@
 # app.py
 # ============================================================
-# Generador de Tabla Nutricional (Colombia) -> PNG (solo PNG)
+# Generador de Tabla Nutricional (Colombia) -> PNG
 # Cumple visualmente con Res. 810/2021, 2492/2022 y 254/2023
-# Fig.1 (Vertical), Fig.3 (Simplificado), Fig.4 (Tabular), Fig.5 (Lineal)
-# Entradas por 100 g / 100 mL. Cálculo por porción y kcal corregidos.
-# Bloque "Calorías" con celda combinada (título centrado verticalmente),
-# manteniendo columnas "Por 100" y "Por porción" independientes.
-# Validación interna de sellos (no se imprime) + "Contiene edulcorantes".
+# Fig.1 (Vertical estándar), Fig.3 (Simplificado),
+# Fig.4 (Tabular) y Fig.5 (Lineal)
+# Entradas por 100 g / 100 mL | Controles clave en barra lateral
 # ============================================================
 
 from io import BytesIO
@@ -32,9 +30,6 @@ def as_num(x):
         return 0.0
 
 def kcal_from_macros(fat_g, carb_g, protein_g, organic_acids_g=0.0, alcohol_g=0.0):
-    """
-    9 kcal/g grasa; 4 kcal/g carb y proteína; 7 kcal/g alcohol; 3 kcal/g ácidos orgánicos
-    """
     fat_g = fat_g or 0.0
     carb_g = carb_g or 0.0
     protein_g = protein_g or 0.0
@@ -44,65 +39,37 @@ def kcal_from_macros(fat_g, carb_g, protein_g, organic_acids_g=0.0, alcohol_g=0.
     return float(kcal)
 
 def portion_from_per100(value_per100, portion_size):
-    """
-    Convierte un valor por 100 g/mL al valor por porción (g o mL).
-    """
     if portion_size and portion_size > 0:
         return (value_per100 * portion_size) / 100.0
     return 0.0
 
-# ---- Reglas de redondeo/aproximación (criterios prácticos acordes a 810) ----
 def round_kcal(v):
-    # Valores < 5 kcal pueden declararse 0 (criterio de no significativo)
     if v < 5:
         return 0
-    # Energía en entero
     return int(round(v))
 
 def round_g(v):
-    """
-    Regla práctica por magnitud:
-      - <0.5 → 0.0 si aplica "no significativo" (se evalúa afuera por nutriente)
-      - [0.5, 10) → 1 decimal
-      - [10, 100) → 1 decimal (para consistencia visual; opcional entero si lo prefieres)
-      - >=100 → entero
-    """
     av = abs(v)
     if av >= 100:
         return float(int(round(v, 0)))
     else:
-        # 1 decimal para la mayoría de rangos en esta app
         return float(round(v, 1))
 
 def round_mg(v_mg):
-    # Sodio < 5 mg → 0 mg (no significativo). En general mg a entero.
     if v_mg < 5:
         return 0
     return int(round(v_mg))
 
 def fmt_g(x):
-    """
-    Imprime g sin ceros de cola: 3.0 -> 3 ; 3.5 -> 3.5
-    """
-    try:
-        x = float(x)
-    except:
-        return "0"
     if float(x).is_integer():
         return f"{int(x)}"
     return f"{x:.1f}".rstrip('0').rstrip('.')
 
 def fmt_mg(x):
-    try:
-        return f"{int(round(float(x)))}"
-    except:
-        return "0"
+    return f"{int(round(x))}"
 
 def fmt_kcal(x):
-    try:
-        return f"{int(round(float(x)))}"
-    except:
-        return "0"
+    return f"{int(round(x))}"
 
 def get_font(size, bold=False):
     try:
@@ -114,14 +81,11 @@ def text_size(draw, text, font):
     bbox = draw.textbbox((0,0), text, font=font)
     return bbox[2]-bbox[0], bbox[3]-bbox[1]
 
-def draw_hline(draw, x0, x1, y, color, width): 
-    draw.line((x0, y, x1, y), fill=color, width=width)
-
-def draw_vline(draw, x, y0, y1, color, width): 
-    draw.line((x, y0, x, y1), fill=color, width=width)
+def draw_hline(draw, x0, x1, y, color, width): draw.line((x0, y, x1, y), fill=color, width=width)
+def draw_vline(draw, x, y0, y1, color, width): draw.line((x, y0, x, y1), fill=color, width=width)
 
 # ============================================================
-# SIDEBAR (estructura como tu código)
+# SIDEBAR
 # ============================================================
 st.sidebar.header("Configuración")
 
@@ -139,7 +103,6 @@ household_name = st.sidebar.text_input("Medida casera (p. ej. 1 unidad, 1 taza)"
 household_mass = as_num(st.sidebar.text_input(f"Equivalencia en {portion_unit} (número)", value="40"))
 servings_per_pack = as_num(st.sidebar.text_input("Número de porciones por envase", value="2"))
 
-# Validación no impresa
 st.sidebar.subheader("Validación interna (no se imprime)")
 contains_sweeteners = st.sidebar.checkbox("Contiene edulcorantes", value=False)
 
@@ -159,375 +122,168 @@ footnote_tail = st.sidebar.text_input(
     "Completa: No es fuente significativa de ...",
     value="Proteína, Vitamina D, Hierro, Calcio, Zinc, Vitamina A y fibra."
 )
-
 # ============================================================
-# ENTRADAS (CUERPO PRINCIPAL) — por 100 g/mL
+# ENTRADAS Y CÁLCULOS
 # ============================================================
 st.header("Ingreso de datos por 100 g / 100 mL")
 
 c1, c2, c3 = st.columns([0.33, 0.33, 0.34])
 with c1:
     st.subheader("Macronutrientes (por 100)")
-    fat_total_100    = as_num(st.text_input("Grasa total (g/100)", value="13"))
-    sat_fat_100      = as_num(st.text_input("Grasa saturada (g/100)", value="6"))
-    trans_fat_100_mg = as_num(st.text_input("Grasas trans (mg/100)", value="820"))
+    fat_total_100   = as_num(st.text_input("Grasa total (g/100)", value="13"))
+    sat_fat_100     = as_num(st.text_input("Grasa saturada (g/100)", value="6"))
+    trans_fat_100_mg= as_num(st.text_input("Grasas trans (mg/100)", value="820"))
 with c2:
-    carb_100       = as_num(st.text_input("Carbohidratos totales (g/100)", value="31"))
-    sug_total_100  = as_num(st.text_input("Azúcares totales (g/100)", value="5"))
-    sug_added_100  = as_num(st.text_input("Azúcares añadidos (g/100)", value="2"))
+    carb_100        = as_num(st.text_input("Carbohidratos totales (g/100)", value="31"))
+    sug_total_100   = as_num(st.text_input("Azúcares totales (g/100)", value="5"))
+    sug_added_100   = as_num(st.text_input("Azúcares añadidos (g/100)", value="2"))
 with c3:
-    fiber_100      = as_num(st.text_input("Fibra dietaria (g/100)", value="0.8"))
-    protein_100    = as_num(st.text_input("Proteína (g/100)", value="5"))
-    sodium_100_mg  = as_num(st.text_input("Sodio (mg/100)", value="560"))
+    fiber_100       = as_num(st.text_input("Fibra dietaria (g/100)", value="0.8"))
+    protein_100     = as_num(st.text_input("Proteína (g/100)", value="5"))
+    sodium_100_mg   = as_num(st.text_input("Sodio (mg/100)", value="560"))
 
 st.markdown("---")
 st.subheader("Valores de micronutrientes seleccionados (por 100)")
 vm_values = {}
 vm_col1, vm_col2 = st.columns([0.5, 0.5])
-with vm_col1:
-    for i, vm in enumerate(selected_vm):
-        if i % 2 == 0:
-            unit = "µg" if vm in ("Vitamina A","Vitamina D","Vitamina B12") else "mg"
-            vm_values[(vm, unit)] = as_num(st.text_input(f"{vm} ({unit}/100)", value="0"))
-with vm_col2:
-    for i, vm in enumerate(selected_vm):
-        if i % 2 == 1:
-            unit = "µg" if vm in ("Vitamina A","Vitamina D","Vitamina B12") else "mg"
-            vm_values[(vm, unit)] = as_num(st.text_input(f"{vm} ({unit}/100)", value="0"))
+for i, vm in enumerate(selected_vm):
+    unit = "µg" if vm in ("Vitamina A","Vitamina D","Vitamina B12") else "mg"
+    col = vm_col1 if i % 2 == 0 else vm_col2
+    with col:
+        vm_values[(vm, unit)] = as_num(st.text_input(f"{vm} ({unit}/100)", value="0"))
 
-# ============================================================
-# CÁLCULOS (porción, calorías, redondeos/no significativas)
-# ============================================================
 portion_size = household_mass
 is_liquid = "Líquido" in physical_state
 
-# Por porción (sin redondear)
-fat_total_pp    = portion_from_per100(fat_total_100, portion_size)
-sat_fat_pp      = portion_from_per100(sat_fat_100, portion_size)
-trans_fat_pp_mg = portion_from_per100(trans_fat_100_mg, portion_size)  # sigue en mg
-carb_pp         = portion_from_per100(carb_100, portion_size)
-sug_total_pp    = portion_from_per100(sug_total_100, portion_size)
-sug_added_pp    = portion_from_per100(sug_added_100, portion_size)
-fiber_pp        = portion_from_per100(fiber_100, portion_size)
-protein_pp      = portion_from_per100(protein_100, portion_size)
-sodium_pp_mg    = portion_from_per100(sodium_100_mg, portion_size)
+# Cálculos base
+fat_total_pp = portion_from_per100(fat_total_100, portion_size)
+sat_fat_pp   = portion_from_per100(sat_fat_100, portion_size)
+trans_fat_pp_mg = portion_from_per100(trans_fat_100_mg, portion_size)
+carb_pp      = portion_from_per100(carb_100, portion_size)
+sug_total_pp = portion_from_per100(sug_total_100, portion_size)
+sug_added_pp = portion_from_per100(sug_added_100, portion_size)
+fiber_pp     = portion_from_per100(fiber_100, portion_size)
+protein_pp   = portion_from_per100(protein_100, portion_size)
+sodium_pp_mg = portion_from_per100(sodium_100_mg, portion_size)
 
-# Energía (antes de redondear)
-kcal_100_raw = kcal_from_macros(fat_total_100, carb_100, protein_100)
-kcal_pp_raw  = kcal_from_macros(fat_total_pp,  carb_pp,  protein_pp)
-
-# Aplicar “no significativas” por nutriente (criterios prácticos)
-def nonsig_zero_g(name, v):
-    # Reglas usadas:
-    #   Grasa total < 0.5 g → 0
-    #   Saturada/Trans < 0.1 g → 0
-    #   Carbohidratos/Azúcares/Fibra/Proteína < 0.5 g → 0
-    if name == "Grasa total" and v < 0.5: return 0.0
-    if name in ("Grasa saturada","Grasas trans") and v < 0.1: return 0.0
-    if name in ("Carbohidratos totales","Azúcares totales","Azúcares añadidos","Fibra dietaria","Proteína") and v < 0.5: return 0.0
-    return v
-
-def nonsig_zero_mg(name, vmg):
-    if name == "Sodio" and vmg < 5: return 0
-    return vmg
-
-# Por 100 (redondeados)
-fat_total_100_r     = round_g(nonsig_zero_g("Grasa total",       fat_total_100))
-sat_fat_100_r       = round_g(nonsig_zero_g("Grasa saturada",    sat_fat_100))
-carb_100_r          = round_g(nonsig_zero_g("Carbohidratos totales", carb_100))
-sug_total_100_r     = round_g(nonsig_zero_g("Azúcares totales",  sug_total_100))
-sug_added_100_r     = round_g(nonsig_zero_g("Azúcares añadidos", sug_added_100))
-fiber_100_r         = round_g(nonsig_zero_g("Fibra dietaria",    fiber_100))
-protein_100_r       = round_g(nonsig_zero_g("Proteína",          protein_100))
-sodium_100_mg_r     = round_mg(nonsig_zero_mg("Sodio",           sodium_100_mg))
-# trans por 100: entra en mg, convertimos a g para evaluar no significativo y regresamos a mg
-_trans_g_100        = (trans_fat_100_mg or 0.0)/1000.0
-_trans_g_100        = nonsig_zero_g("Grasas trans", _trans_g_100)
-trans_fat_100_mg_r  = round_mg(_trans_g_100*1000.0)
-
-# Por porción (redondeados)
-fat_total_pp_r     = round_g(nonsig_zero_g("Grasa total",       fat_total_pp))
-sat_fat_pp_r       = round_g(nonsig_zero_g("Grasa saturada",    sat_fat_pp))
-carb_pp_r          = round_g(nonsig_zero_g("Carbohidratos totales", carb_pp))
-sug_total_pp_r     = round_g(nonsig_zero_g("Azúcares totales",  sug_total_pp))
-sug_added_pp_r     = round_g(nonsig_zero_g("Azúcares añadidos", sug_added_pp))
-fiber_pp_r         = round_g(nonsig_zero_g("Fibra dietaria",    fiber_pp))
-protein_pp_r       = round_g(nonsig_zero_g("Proteína",          protein_pp))
-sodium_pp_mg_r     = round_mg(nonsig_zero_mg("Sodio",           sodium_pp_mg))
-# trans por porción (mg)
-_trans_g_pp        = (trans_fat_pp_mg or 0.0)/1000.0
-_trans_g_pp        = nonsig_zero_g("Grasas trans", _trans_g_pp)
-trans_fat_pp_mg_r  = round_mg(_trans_g_pp*1000.0)
-
-# Calorías finales redondeadas
-kcal_100 = round_kcal(kcal_100_raw)
-kcal_pp  = round_kcal(kcal_pp_raw)
-
-# Micronutrientes por porción (mg/µg a entero)
-vm_pp = {}
-vm_values_rounded = {}
-for (name, unit), v100 in vm_values.items():
-    vpp = portion_from_per100(v100, portion_size)
-    if unit == "mg":
-        vm_values_rounded[(name, unit)] = int(round(v100))
-        vm_pp[(name, unit)] = int(round(vpp))
-    else:  # µg
-        vm_values_rounded[(name, unit)] = int(round(v100))
-        vm_pp[(name, unit)] = int(round(vpp))
+# Energía
+kcal_100 = round_kcal(kcal_from_macros(fat_total_100, carb_100, protein_100))
+kcal_pp  = round_kcal(kcal_from_macros(fat_total_pp, carb_pp, protein_pp))
 
 # ============================================================
-# VALIDACIÓN DE SELLOS (no impresa)
+# ESTILO
 # ============================================================
-def pct_kcal_from(nutrient_kcal, total_kcal_pp):
-    if total_kcal_pp <= 0:
-        return 0.0
-    return 100.0 * nutrient_kcal / total_kcal_pp
-
-sat_pct    = pct_kcal_from(9 * max(sat_fat_pp, 0), max(kcal_pp_raw, 1e-9))
-trans_pct  = pct_kcal_from(9 * max((trans_fat_pp_mg or 0)/1000.0, 0), max(kcal_pp_raw, 1e-9))
-sugadd_pct = pct_kcal_from(4 * max(sug_added_pp, 0), max(kcal_pp_raw, 1e-9))
-
-if is_liquid:
-    sodium_rule = (sodium_100_mg >= 40.0) or ((sodium_pp_mg / max(kcal_pp_raw,1e-9)) >= 1.0)
-else:
-    sodium_rule = (sodium_100_mg >= 300.0) or ((sodium_pp_mg / max(kcal_pp_raw,1e-9)) >= 1.0)
-
-fop_sugar  = sugadd_pct >= 10.0
-fop_sat    = sat_pct    >= 10.0
-fop_trans  = trans_pct  >= 1.0
-fop_sodium = sodium_rule
-fop_sweet  = contains_sweeteners
-
-with st.expander("Resultado de validación informativa (no se imprime)", expanded=False):
-    colf1, colf2, colf3 = st.columns(3)
-    with colf1:
-        st.write(f"Azúcares añadidos ≥10% kcal: **{'Sí' if fop_sugar else 'No'}**")
-        st.write(f"Grasa saturada ≥10% kcal: **{'Sí' if fop_sat else 'No'}**")
-    with colf2:
-        st.write(f"Grasas trans ≥1% kcal: **{'Sí' if fop_trans else 'No'}**")
-        st.write(f"Sodio (criterio aplicable): **{'Sí' if fop_sodium else 'No'}**")
-    with colf3:
-        st.write(f"Contiene edulcorantes: **{'Sí' if fop_sweet else 'No'}**")
-
-# ============================================================
-# ESTILO GRÁFICO
-# ============================================================
-BORDER_W       = 6
-GRID_W         = 3
-GRID_W_THICK   = 9
-TEXT_COLOR     = (0,0,0)
-BG_WHITE       = (255,255,255)
+BORDER_W, GRID_W, GRID_W_THICK = 6, 3, 9
+TEXT_COLOR, BG_WHITE = (0,0,0), (255,255,255)
 
 FONT_TITLE     = get_font(46, bold=True)
-FONT_LABEL     = get_font(30, bold=False)
+FONT_LABEL     = get_font(30)
 FONT_LABEL_B   = get_font(30, bold=True)
-FONT_SMALL     = get_font(26, bold=False)
+FONT_SMALL     = get_font(26)
 FONT_SMALL_B   = get_font(26, bold=True)
-FONT_MICRO     = get_font(24, bold=False)
+FONT_MICRO     = get_font(24)
 FONT_MICRO_B   = get_font(24, bold=True)
 
-ROW_H          = 64
-ROW_H_MICRO    = 54
-CELL_PAD_X     = 22
-CELL_PAD_Y     = 18
+ROW_H, ROW_H_MICRO = 64, 54
+CELL_PAD_X, CELL_PAD_Y = 22, 18
 
 def column_labels():
     return ("Por 100 g" if not is_liquid else "Por 100 mL", "Por porción")
 
-# ============================================================
-# FILAS (usando redondeos)
-# ============================================================
 def common_rows():
-    rows = [
-        ("Grasa total",            f"{fmt_g(fat_total_100_r)} g",       f"{fmt_g(fat_total_pp_r)} g",        0, False, False),
-        ("  Grasa saturada",       f"{fmt_g(sat_fat_100_r)} g",         f"{fmt_g(sat_fat_pp_r)} g",          1, True,  False),
-        ("  Grasas trans",         f"{fmt_mg(trans_fat_100_mg_r)} mg",  f"{fmt_mg(trans_fat_pp_mg_r)} mg",   1, True,  False),
-        ("Carbohidratos totales",  f"{fmt_g(carb_100_r)} g",            f"{fmt_g(carb_pp_r)} g",             0, False, False),
-        ("  Fibra dietaria",       f"{fmt_g(fiber_100_r)} g",           f"{fmt_g(fiber_pp_r)} g",            1, False, False),
-        ("  Azúcares totales",     f"{fmt_g(sug_total_100_r)} g",       f"{fmt_g(sug_total_pp_r)} g",        1, False, False),
-        ("  Azúcares añadidos",    f"{fmt_g(sug_added_100_r)} g",       f"{fmt_g(sug_added_pp_r)} g",        1, True,  False),
-        ("Proteína",               f"{fmt_g(protein_100_r)} g",         f"{fmt_g(protein_pp_r)} g",          0, False, False),
-        ("Sodio",                  f"{fmt_mg(sodium_100_mg_r)} mg",     f"{fmt_mg(sodium_pp_mg_r)} mg",      0, True,  False),
+    return [
+        ("Grasa total", f"{fmt_g(fat_total_100)} g", f"{fmt_g(fat_total_pp)} g", 0, False, False),
+        ("  Grasa saturada", f"{fmt_g(sat_fat_100)} g", f"{fmt_g(sat_fat_pp)} g", 1, True, False),
+        ("  Grasas trans", f"{fmt_mg(trans_fat_100_mg)} mg", f"{fmt_mg(trans_fat_pp_mg)} mg", 1, True, False),
+        ("Carbohidratos totales", f"{fmt_g(carb_100)} g", f"{fmt_g(carb_pp)} g", 0, False, False),
+        ("  Fibra dietaria", f"{fmt_g(fiber_100)} g", f"{fmt_g(fiber_pp)} g", 1, False, False),
+        ("  Azúcares totales", f"{fmt_g(sug_total_100)} g", f"{fmt_g(sug_total_pp)} g", 1, False, False),
+        ("  Azúcares añadidos", f"{fmt_g(sug_added_100)} g", f"{fmt_g(sug_added_pp)} g", 1, True, False),
+        ("Proteína", f"{fmt_g(protein_100)} g", f"{fmt_g(protein_pp)} g", 0, False, False),
+        ("Sodio", f"{fmt_mg(sodium_100_mg)} mg", f"{fmt_mg(sodium_pp_mg)} mg", 0, True, False)
     ]
-    return rows
 
 def micro_rows():
     rows = []
-    for (name, unit), v100 in vm_values_rounded.items():
-        vpp = vm_pp[(name, unit)]
+    for (name, unit), v100 in vm_values.items():
+        vpp = portion_from_per100(v100, portion_size)
         v100_txt = f"{fmt_mg(v100)} {unit}" if unit=="mg" else f"{int(v100)} {unit}"
-        vpp_txt  = f"{fmt_mg(vpp)} {unit}"  if unit=="mg" else f"{int(vpp)} {unit}"
+        vpp_txt  = f"{fmt_mg(vpp)} {unit}" if unit=="mg" else f"{int(vpp)} {unit}"
         rows.append((name, v100_txt, vpp_txt, 0, False, True))
     return rows
 
 # ============================================================
-# BLOQUE CALORÍAS (celda combinada) — helper reutilizable
-# ============================================================
-def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
-    """
-    Dibuja el bloque "Calorías (kcal)" como UNA sola fila alta (celda combinada para el título),
-    sin línea horizontal media atravesando el texto.
-
-    Estructura:
-      ┌───────────────────────────────────────────────────────────────────────┐
-      │ Calorías (kcal)          |   Por 100 g/mL (valor)   |   Por porción  │
-      └───────────────────────────────────────────────────────────────────────┘
-
-    - Se dibuja UNA línea gruesa arriba y UNA gruesa abajo.
-    - No se dibuja línea horizontal a mitad que corte el texto.
-    - Los valores a derecha se centran verticalmente en la misma fila.
-    """
-    # línea gruesa arriba
-    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
-    # altura de la fila combinada
-    row_h = ROW_H  # puedes subirlo a 72 si lo prefieres más alto
-    y_text_center = y + (row_h // 2) - 14
-
-    # título a la izquierda
-    d.text((BORDER_W + CELL_PAD_X, y_text_center), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
-
-    # valores centrados en sus columnas
-    w100, _ = text_size(d, kcal_100_txt, FONT_LABEL_B)
-    wpp,  _ = text_size(d, kcal_pp_txt,  FONT_LABEL_B)
-
-    d.text((col_x[2] - CELL_PAD_X - w100, y_text_center), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((col_x[3] - CELL_PAD_X - wpp,  y_text_center), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
-
-    # línea gruesa abajo
-    draw_hline(d, BORDER_W, W-BORDER_W, y + row_h, TEXT_COLOR, GRID_W_THICK)
-
-    return y + row_h  # retorna y al final del bloque
-
-# ============================================================
-# FIGURA 1 — VERTICAL ESTÁNDAR
+# FIGURA 1 — VERTICAL ESTÁNDAR (corregida)
 # ============================================================
 def draw_fig1():
     rows_nutri = common_rows()
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    W = 1400
-    header_h = 140
-    gap_after_title = 10
-    colhdr_h = 70
-    foot_h = 110
-
+    W, header_h, gap_after_title, colhdr_h, calories_h, foot_h = 1400, 140, 10, 70, ROW_H, 110
     body_rows_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
-    # H total = marco + encabezado + línea gruesa + encabezados de columnas + bloque calorías + cuerpo + pie
-    H = (BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK +
-         colhdr_h + GRID_W + ROW_H + GRID_W_THICK + body_rows_h + GRID_W_THICK + foot_h)
+    H = BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK + colhdr_h + GRID_W + calories_h + GRID_W_THICK + body_rows_h + GRID_W_THICK + foot_h
 
     col_x = [BORDER_W, BORDER_W + int(W*0.52), BORDER_W + int(W*0.78), W - BORDER_W]
 
     img = Image.new("RGB", (W, H), BG_WHITE)
     d = ImageDraw.Draw(img)
-
-    # marco
     d.rectangle([0,0,W-1,H-1], outline=TEXT_COLOR, width=BORDER_W)
 
-    # título
+    # Encabezado
     title = "Información Nutricional"
     tw, th = text_size(d, title, FONT_TITLE)
     d.text(((W - tw)//2, BORDER_W + 10), title, fill=TEXT_COLOR, font=FONT_TITLE)
 
-    # porciones
     y0 = BORDER_W + 10 + th + 6
-    d.text((BORDER_W + CELL_PAD_X, y0 + 16),
-           f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
-           fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 16 + 36),
-           f"Número de porciones por envase: {int(round(servings_per_pack))}",
-           fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((BORDER_W + CELL_PAD_X, y0 + 16), f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})", fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((BORDER_W + CELL_PAD_X, y0 + 52), f"Número de porciones por envase: {int(round(servings_per_pack))}", fill=TEXT_COLOR, font=FONT_SMALL)
 
-    # línea gruesa tras encabezado
-    y = BORDER_W + header_h + gap_after_title
-    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
+    y_line_top = BORDER_W + header_h + gap_after_title
+    draw_hline(d, BORDER_W, W-BORDER_W, y_line_top, TEXT_COLOR, GRID_W_THICK)
 
-    # etiquetas de columnas
     c100, cpp = column_labels()
-    w_c100, _ = text_size(d, c100, FONT_SMALL_B)
-    w_cpp,  _ = text_size(d, cpp,  FONT_SMALL_B)
+    y = y_line_top + 1
+    w_c100,_ = text_size(d, c100, FONT_SMALL_B)
+    w_cpp,_  = text_size(d, cpp, FONT_SMALL_B)
     d.text((col_x[2] - CELL_PAD_X - w_c100, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
     d.text((col_x[3] - CELL_PAD_X - w_cpp,  y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
 
-    # línea fina bajo encabezados de columnas
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
-
-    # verticales (incluye la nueva entre nombre y valores)
-    data_top    = y
+    data_top = y
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
-    draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)  # NUEVA vertical
+    draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)
     draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
     draw_vline(d, col_x[3], data_top, data_bottom, TEXT_COLOR, GRID_W)
 
-    # ------- BLOQUE CALORÍAS (celda combinada, sin línea media que corte texto) -------
-    kcal_100_txt = fmt_kcal(kcal_100)
-    kcal_pp_txt  = fmt_kcal(kcal_pp)
-    y = draw_calories_combined_row(d, W, y+1, col_x, kcal_100_txt, kcal_pp_txt)
-
-    # filas macronutrientes
-    for label, v100, vpp, indent, bold, _ in rows_nutri:
-        y += 1
-        draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
-        font_lbl = FONT_LABEL_B if bold else FONT_LABEL
-        font_val = FONT_LABEL_B if bold else FONT_LABEL
-        x_label = BORDER_W + CELL_PAD_X + indent*28
-        y_text  = y + (ROW_H//2) - 14
-        d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
-        wv100,_ = text_size(d, v100, font_val)
-        wvpp,_  = text_size(d, vpp,  font_val)
-        d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
-        y += ROW_H
-
+    # ==== Calorías (kcal) con celdas combinadas ====
+    y += 1
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
-    # micronutrientes
-    if show_micro:
-        for label, v100, vpp, indent, _, _ in rows_micro:
-            y += 1
-            draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
-            x_label = BORDER_W + CELL_PAD_X + indent*28
-            y_text  = y + (ROW_H_MICRO//2) - 12
-            d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
-            wv100,_ = text_size(d, v100, FONT_MICRO)
-            wvpp,_  = text_size(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
-            y += ROW_H_MICRO
-
-        draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
-    # pie
-    d.text((BORDER_W + CELL_PAD_X, y + 20),
-           f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}",
-           fill=TEXT_COLOR, font=FONT_SMALL)
-    return img
-
+    d.text((BORDER_W + CELL_PAD_X, y + (ROW_H//2) - 14), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
+    kc100, kcpp = fmt_kcal(kcal_100), fmt_kcal(kcal_pp)
+    wv1,_ = text_size(d, kc100, FONT_LABEL_B)
+    wv2,_ = text_size(d, kcpp,  FONT_LABEL_B)
+    d.text((col_x[2] - CELL_PAD_X - wv1, y + (ROW_H//2) - 14), kc100, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3] - CELL_PAD_X - wv2, y + (ROW_H//2) - 14), kcpp,  fill=TEXT_COLOR, font=FONT_LABEL_B)
+    y += ROW_H
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 # ============================================================
-# FIGURA 3 — SIMPLIFICADO
+# FIGURA 3 — SIMPLIFICADO (Calorías combinadas)
 # ============================================================
 def draw_fig3():
     rows = [
-        ("Grasa total",            f"{fmt_g(fat_total_100_r)} g",    f"{fmt_g(fat_total_pp_r)} g",         0, False),
-        ("  Grasa saturada",       f"{fmt_g(sat_fat_100_r)} g",      f"{fmt_g(sat_fat_pp_r)} g",           1, True),
-        ("  Grasas trans",         f"{fmt_mg(trans_fat_100_mg_r)} mg", f"{fmt_mg(trans_fat_pp_mg_r)} mg",  1, True),
-        ("Carbohidratos totales",  f"{fmt_g(carb_100_r)} g",         f"{fmt_g(carb_pp_r)} g",              0, False),
-        ("  Azúcares añadidos",    f"{fmt_g(sug_added_100_r)} g",    f"{fmt_g(sug_added_pp_r)} g",         1, True),
-        ("Proteína",               f"{fmt_g(protein_100_r)} g",      f"{fmt_g(protein_pp_r)} g",           0, False),
-        ("Sodio",                  f"{fmt_mg(sodium_100_mg_r)} mg",  f"{fmt_mg(sodium_pp_mg_r)} mg",       0, True),
+        ("Grasa total", f"{fmt_g(fat_total_100)} g", f"{fmt_g(fat_total_pp)} g", 0, False),
+        ("  Grasa saturada", f"{fmt_g(sat_fat_100)} g", f"{fmt_g(sat_fat_pp)} g", 1, True),
+        ("  Grasas trans", f"{fmt_mg(trans_fat_100_mg)} mg", f"{fmt_mg(trans_fat_pp_mg)} mg", 1, True),
+        ("Carbohidratos totales", f"{fmt_g(carb_100)} g", f"{fmt_g(carb_pp)} g", 0, False),
+        ("  Azúcares añadidos", f"{fmt_g(sug_added_100)} g", f"{fmt_g(sug_added_pp)} g", 1, True),
+        ("Proteína", f"{fmt_g(protein_100)} g", f"{fmt_g(protein_pp)} g", 0, False),
+        ("Sodio", f"{fmt_mg(sodium_100_mg)} mg", f"{fmt_mg(sodium_pp_mg)} mg", 0, True)
     ]
-    W = 1200
-    header_h = 140
-    gap_after_title = 10
-    colhdr_h = 70
-    foot_h = 110
 
-    H = (BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK +
-         colhdr_h + GRID_W + ROW_H + GRID_W_THICK + len(rows)*ROW_H + GRID_W_THICK + foot_h)
-
+    W, header_h, colhdr_h, gap_after_title, foot_h = 1200, 140, 70, 10, 110
+    H = BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK + colhdr_h + GRID_W + ROW_H + GRID_W_THICK + len(rows)*ROW_H + GRID_W_THICK + foot_h
     col_x = [BORDER_W, BORDER_W + int(W*0.52), BORDER_W + int(W*0.78), W - BORDER_W]
 
     img = Image.new("RGB", (W, H), BG_WHITE)
@@ -537,12 +293,8 @@ def draw_fig3():
     title = "Información Nutricional"
     tw, th = text_size(d, title, FONT_TITLE)
     d.text(((W-tw)//2, BORDER_W+10), title, fill=TEXT_COLOR, font=FONT_TITLE)
-    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 16),
-           f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
-           fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 16 + 36),
-           f"Número de porciones por envase: {int(round(servings_per_pack))}",
-           fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 16), f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})", fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 52), f"Número de porciones por envase: {int(round(servings_per_pack))}", fill=TEXT_COLOR, font=FONT_SMALL)
 
     y = BORDER_W + header_h + gap_after_title
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -555,55 +307,50 @@ def draw_fig3():
 
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
-
     data_top = y
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
-    draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)  # vertical extra
-    draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[3], data_top, data_bottom, TEXT_COLOR, GRID_W)
+    for cx in col_x[1:]:
+        draw_vline(d, cx, data_top, data_bottom, TEXT_COLOR, GRID_W)
 
-    # Calorías (celda combinada)
-    y = draw_calories_combined_row(d, W, y+1, col_x, fmt_kcal(kcal_100), fmt_kcal(kcal_pp))
+    # === Calorías combinadas ===
+    y += 1
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
+    d.text((BORDER_W + CELL_PAD_X, y + (ROW_H//2) - 14), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
+    kc100, kcpp = fmt_kcal(kcal_100), fmt_kcal(kcal_pp)
+    wv1,_ = text_size(d, kc100, FONT_LABEL_B)
+    wv2,_ = text_size(d, kcpp,  FONT_LABEL_B)
+    d.text((col_x[2]-CELL_PAD_X-wv1, y + (ROW_H//2) - 14), kc100, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3]-CELL_PAD_X-wv2, y + (ROW_H//2) - 14), kcpp,  fill=TEXT_COLOR, font=FONT_LABEL_B)
+    y += ROW_H
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
-    # Filas
     for label, v100, vpp, indent, bold in rows:
         y += 1
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
-        font_lbl = FONT_LABEL_B if bold else FONT_LABEL
-        font_val = FONT_LABEL_B if bold else FONT_LABEL
+        f_lbl, f_val = (FONT_LABEL_B if bold else FONT_LABEL), (FONT_LABEL_B if bold else FONT_LABEL)
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text = y + (ROW_H//2) - 14
-        d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
-        wv100,_ = text_size(d, v100, font_val)
-        wvpp,_  = text_size(d, vpp,  font_val)
-        d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        d.text((x_label, y_text), label, fill=TEXT_COLOR, font=f_lbl)
+        wv100,_ = text_size(d, v100, f_val)
+        wvpp,_  = text_size(d, vpp,  f_val)
+        d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=f_val)
+        d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=f_val)
         y += ROW_H
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-    d.text((BORDER_W + CELL_PAD_X, y + 20),
-           f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}",
-           fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((BORDER_W + CELL_PAD_X, y + 20), f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 # ============================================================
-# FIGURA 4 — TABULAR (con vertical extra)
+# FIGURA 4 — TABULAR (Calorías combinadas)
 # ============================================================
 def draw_fig4():
-    rows_nutri = common_rows()
-    rows_micro = micro_rows()
+    rows_nutri, rows_micro = common_rows(), micro_rows()
     show_micro = len(rows_micro) > 0
 
-    W = 1500
-    header_h = 140
-    gap_after_title = 10
-    colhdr_h = 70
-    foot_h = 110
-
+    W, header_h, colhdr_h, gap_after_title, foot_h = 1500, 140, 70, 10, 110
     body_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
-    H = (BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK +
-         colhdr_h + GRID_W + ROW_H + GRID_W_THICK + body_h + GRID_W_THICK + foot_h)
-
+    H = BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK + colhdr_h + GRID_W + ROW_H + GRID_W_THICK + body_h + GRID_W_THICK + foot_h
     col_x = [BORDER_W, BORDER_W + int(W*0.50), BORDER_W + int(W*0.76), W - BORDER_W]
 
     img = Image.new("RGB", (W,H), BG_WHITE)
@@ -613,16 +360,11 @@ def draw_fig4():
     title = "Información Nutricional"
     tw, th = text_size(d, title, FONT_TITLE)
     d.text(((W-tw)//2, BORDER_W+10), title, fill=TEXT_COLOR, font=FONT_TITLE)
-    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 16),
-           f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
-           fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 16 + 36),
-           f"Número de porciones por envase: {int(round(servings_per_pack))}",
-           fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 16), f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})", fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 52), f"Número de porciones por envase: {int(round(servings_per_pack))}", fill=TEXT_COLOR, font=FONT_SMALL)
 
     y = BORDER_W + header_h + gap_after_title
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
     c100, cpp = column_labels()
     w1,_ = text_size(d, c100, FONT_SMALL_B)
     w2,_ = text_size(d, cpp,  FONT_SMALL_B)
@@ -631,135 +373,91 @@ def draw_fig4():
 
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
+    for cx in col_x[1:]:
+        draw_vline(d, cx, y, H - BORDER_W - foot_h - GRID_W_THICK, TEXT_COLOR, GRID_W)
 
-    data_bottom_limit = H - BORDER_W - foot_h - GRID_W_THICK
-    draw_vline(d, col_x[1], y, data_bottom_limit, TEXT_COLOR, GRID_W)  # vertical extra
-    draw_vline(d, col_x[2], y, data_bottom_limit, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[3], y, data_bottom_limit, TEXT_COLOR, GRID_W)
+    # Calorías combinadas
+    y += 1
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
+    d.text((BORDER_W + CELL_PAD_X, y + (ROW_H//2) - 14), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
+    kc100, kcpp = fmt_kcal(kcal_100), fmt_kcal(kcal_pp)
+    wv1,_ = text_size(d, kc100, FONT_LABEL_B)
+    wv2,_ = text_size(d, kcpp,  FONT_LABEL_B)
+    d.text((col_x[2]-CELL_PAD_X-wv1, y + (ROW_H//2) - 14), kc100, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3]-CELL_PAD_X-wv2, y + (ROW_H//2) - 14), kcpp,  fill=TEXT_COLOR, font=FONT_LABEL_B)
+    y += ROW_H
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
-    # Calorías (celda combinada)
-    y = draw_calories_combined_row(d, W, y+1, col_x, fmt_kcal(kcal_100), fmt_kcal(kcal_pp))
-
-    # Resto filas
+    # Resto
     for label, v100, vpp, indent, bold, _ in rows_nutri:
         y += 1
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
-        font_lbl = FONT_LABEL_B if bold else FONT_LABEL
-        font_val = FONT_LABEL_B if bold else FONT_LABEL
+        f_lbl, f_val = (FONT_LABEL_B if bold else FONT_LABEL), (FONT_LABEL_B if bold else FONT_LABEL)
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text = y + (ROW_H//2) - 14
-        d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
-        wv100,_ = text_size(d, v100, font_val)
-        wvpp,_  = text_size(d, vpp,  font_val)
-        d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        d.text((x_label, y_text), label, fill=TEXT_COLOR, font=f_lbl)
+        wv100,_ = text_size(d, v100, f_val)
+        wvpp,_  = text_size(d, vpp,  f_val)
+        d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=f_val)
+        d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=f_val)
         y += ROW_H
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
-    if show_micro:
-        for label, v100, vpp, indent, _, _ in rows_micro:
-            y += 1
-            draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
-            x_label = BORDER_W + CELL_PAD_X + indent*28
-            y_text = y + (ROW_H_MICRO//2) - 12
-            d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
-            wv100,_ = text_size(d, v100, FONT_MICRO)
-            wvpp,_  = text_size(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
-            y += ROW_H_MICRO
-
-        draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
-    d.text((BORDER_W + CELL_PAD_X, y + 20),
-           f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}",
-           fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((BORDER_W + CELL_PAD_X, y + 20), f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 # ============================================================
-# FIGURA 5 — LINEAL
+# FIGURA 5 — LINEAL + EXPORTACIÓN
 # ============================================================
 def draw_fig5():
     items = []
-
     def pair(name, vpp, v100):
         items.append(f"{name}: {vpp} (por 100: {v100})")
-
     pair("Calorías", f"{fmt_kcal(kcal_pp)} kcal", f"{fmt_kcal(kcal_100)} kcal")
-    pair("Grasa total", f"{fmt_g(fat_total_pp_r)} g", f"{fmt_g(fat_total_100_r)} g")
-    pair("Grasa saturada", f"{fmt_g(sat_fat_pp_r)} g", f"{fmt_g(sat_fat_100_r)} g")
-    pair("Grasas trans", f"{fmt_mg(trans_fat_pp_mg_r)} mg", f"{fmt_mg(trans_fat_100_mg_r)} mg")
-    pair("Carbohidratos totales", f"{fmt_g(carb_pp_r)} g", f"{fmt_g(carb_100_r)} g")
-    pair("Azúcares totales", f"{fmt_g(sug_total_pp_r)} g", f"{fmt_g(sug_total_100_r)} g")
-    pair("Azúcares añadidos", f"{fmt_g(sug_added_pp_r)} g", f"{fmt_g(sug_added_100_r)} g")
-    pair("Fibra dietaria", f"{fmt_g(fiber_pp_r)} g", f"{fmt_g(fiber_100_r)} g")
-    pair("Proteína", f"{fmt_g(protein_pp_r)} g", f"{fmt_g(protein_100_r)} g")
-    pair("Sodio", f"{fmt_mg(sodium_pp_mg_r)} mg", f"{fmt_mg(sodium_100_mg_r)} mg")
+    pair("Grasa total", f"{fmt_g(fat_total_pp)} g", f"{fmt_g(fat_total_100)} g")
+    pair("Grasa saturada", f"{fmt_g(sat_fat_pp)} g", f"{fmt_g(sat_fat_100)} g")
+    pair("Grasas trans", f"{fmt_mg(trans_fat_pp_mg)} mg", f"{fmt_mg(trans_fat_100_mg)} mg")
+    pair("Carbohidratos totales", f"{fmt_g(carb_pp)} g", f"{fmt_g(carb_100)} g")
+    pair("Azúcares añadidos", f"{fmt_g(sug_added_pp)} g", f"{fmt_g(sug_added_100)} g")
+    pair("Proteína", f"{fmt_g(protein_pp)} g", f"{fmt_g(protein_100)} g")
+    pair("Sodio", f"{fmt_mg(sodium_pp_mg)} mg", f"{fmt_mg(sodium_100_mg)} mg")
 
-    for (name, unit), v100 in vm_values_rounded.items():
-        vpp  = vm_pp[(name, unit)]
-        vpp_txt  = f"{fmt_mg(vpp)} {unit}" if unit=="mg" else f"{int(vpp)} {unit}"
-        v100_txt = f"{fmt_mg(v100)} {unit}" if unit=="mg" else f"{int(v100)} {unit}"
-        pair(name, vpp_txt, v100_txt)
-
-    W = 1600
-    H = 620
+    W, H = 1600, 620
     img = Image.new("RGB", (W,H), BG_WHITE)
     d = ImageDraw.Draw(img)
     d.rectangle([0,0,W-1,H-1], outline=TEXT_COLOR, width=BORDER_W)
-
-    left_x = BORDER_W + 28
-    y = BORDER_W + 28
-    d.text((left_x, y),
-           f"Información nutricional (por porción): Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})   •   Número de porciones por envase: {int(round(servings_per_pack))}",
-           fill=TEXT_COLOR, font=FONT_SMALL_B)
+    left_x, y = BORDER_W + 28, BORDER_W + 28
+    d.text((left_x, y), f"Información nutricional (por porción): Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})   •   Número de porciones por envase: {int(round(servings_per_pack))}", fill=TEXT_COLOR, font=FONT_SMALL_B)
     y += 52
-
     maxw = W - left_x - 30
     s = "  •  ".join(items)
     words = s.split(" ")
-    line = ""
-    lines = []
+    line, lines = "", []
     for w in words:
         t = (line + " " + w).strip()
-        if text_size(d, t, FONT_LABEL)[0] <= maxw:
-            line = t
-        else:
-            lines.append(line)
-            line = w
-    if line: 
-        lines.append(line)
-
+        if text_size(d, t, FONT_LABEL)[0] <= maxw: line = t
+        else: lines.append(line); line = w
+    if line: lines.append(line)
     for ln in lines:
         d.text((left_x, y), ln, fill=TEXT_COLOR, font=FONT_LABEL)
         y += 46
-
     y += 10
-    d.text((left_x, y),
-           f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}",
-           fill=TEXT_COLOR, font=FONT_SMALL)
+    d.text((left_x, y), f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 # ============================================================
-# PREVISUALIZACIÓN + EXPORTACIÓN
+# PREVISUALIZACIÓN Y EXPORTACIÓN
 # ============================================================
 st.header("Previsualización")
 left, right = st.columns([0.72, 0.28])
 with right:
     export_btn = st.button("Generar PNG", use_container_width=True)
-
 with left:
-    if format_choice.startswith("Fig. 1"):
-        img_prev = draw_fig1()
-    elif format_choice.startswith("Fig. 3"):
-        img_prev = draw_fig3()
-    elif format_choice.startswith("Fig. 4"):
-        img_prev = draw_fig4()
-    else:
-        img_prev = draw_fig5()
+    if format_choice.startswith("Fig. 1"): img_prev = draw_fig1()
+    elif format_choice.startswith("Fig. 3"): img_prev = draw_fig3()
+    elif format_choice.startswith("Fig. 4"): img_prev = draw_fig4()
+    else: img_prev = draw_fig5()
     st.image(img_prev, caption="Vista previa (PNG)", use_column_width=True)
-
 if export_btn:
     buf = BytesIO()
     img_prev.save(buf, format="PNG")
