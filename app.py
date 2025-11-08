@@ -1,3 +1,4 @@
+
 # app.py
 # ============================================================
 # Generador de Tabla Nutricional (Colombia) -> PNG (solo PNG)
@@ -562,6 +563,7 @@ def draw_fig1():
 
     # pie (opcional)
     if footnote_tail.strip():
+        if footnote_tail.strip():
     d.text((BORDER_W + CELL_PAD_X, y + 20), f"No es fuente significativa de {footnote_tail.strip().rstrip(\'.\')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
@@ -645,6 +647,7 @@ def draw_fig3():
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
     if footnote_tail.strip():
+        if footnote_tail.strip():
     d.text((BORDER_W + CELL_PAD_X, y + 20), f"No es fuente significativa de {footnote_tail.strip().rstrip(\'.\')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
@@ -739,6 +742,7 @@ def draw_fig4():
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
     if footnote_tail.strip():
+        if footnote_tail.strip():
     d.text((BORDER_W + CELL_PAD_X, y + 20), f"No es fuente significativa de {footnote_tail.strip().rstrip(\'.\')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
