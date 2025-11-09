@@ -225,7 +225,7 @@ sodium_100_mg_r     = round_mg(sodium_100_mg)
 poly_100_r          = round_g(poly_100) if include_poly else 0.0
 _trans_g_100        = (trans_fat_100_mg or 0.0)/1000.0
 _trans_g_100        = nonsig_zero_g("Grasas trans", _trans_g_100)
-trans_fat_100_mg_r  = round_mg(_trans_g_100*1000.0) if _trans_g_100 >= 0.1 else 0
+trans_fat_100_mg_r  = round_mg(_trans_g_100 * 1000.0)
 
 # Por porción
 fat_total_pp_r     = round_g(nonsig_zero_g("Grasa total",       fat_total_pp))
@@ -239,7 +239,7 @@ sodium_pp_mg_r     = round_mg(sodium_pp_mg)
 poly_pp_r          = round_g(poly_pp) if include_poly else 0.0
 _trans_g_pp        = (trans_fat_pp_mg or 0.0)/1000.0
 _trans_g_pp        = nonsig_zero_g("Grasas trans", _trans_g_pp)
-trans_fat_pp_mg_r  = round_mg(_trans_g_pp * 1000.0) if _trans_g_pp >= 0.1 else 0
+trans_fat_pp_mg_r  = round_mg(_trans_g_pp * 1000.0)
 
 # Micronutrientes por porción
 vm_pp = {}
