@@ -26,6 +26,13 @@ def get_font(size, bold=False):
     except:
         return ImageFont.load_default()
 
+def draw_hline(draw, x0, x1, y, color, width):
+    draw.line((x0, y, x1, y), fill=color, width=width)
+
+def draw_vline(draw, x, y0, y1, color, width):
+    draw.line((x, y0, x, y1), fill=color, width=width)
+
+
 
 # ============================================================
 # CONFIG
@@ -374,14 +381,6 @@ def column_labels():
 # ============== Helper: medición y columnas compactas por contenido ==============
 def measure_text(draw, text, font):
 
-def draw_hline(draw, x0, x1, y, color, width):
-    draw.line((x0, y, x1, y), fill=color, width=width)
-
-def draw_vline(draw, x, y0, y1, color, width):
-    draw.line((x, y0, x, y1), fill=color, width=width)
-
-    bbox = draw.textbbox((0,0), text, font=font)
-    return bbox[2]-bbox[0], bbox[3]-bbox[1]
 
 def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, right_margin=20):
     """
