@@ -501,7 +501,7 @@ def draw_fig1():
 
     # ANCHO INICIAL SUFICIENTE para evitar cortes
     W = 900  # Aumentado significativamente a 900 píxeles
-    header_h = 130  # Suficiente espacio para el encabezado
+    header_h = 115  # REDUCIDO de 130 a 115 píxeles
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
 
@@ -532,14 +532,14 @@ def draw_fig1():
     # título
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
-    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
+    d.text(((W - tw)//2, BORDER_W + 12), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Reducido de 15 a 12
 
-    # porciones - texto con ESPACIO SUFICIENTE
-    y0 = BORDER_W + 15 + th + 12
+    # porciones - texto con ESPACIO REDUCIDO
+    y0 = BORDER_W + 12 + th + 8  # Reducido de 12 a 8
     d.text((BORDER_W + CELL_PAD_X, y0),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 35),
+    d.text((BORDER_W + CELL_PAD_X, y0 + 28),  # Reducido de 35 a 28
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
