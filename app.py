@@ -657,7 +657,7 @@ def draw_fig3():
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
     draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
     draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
-
+    
     # Filas macronutrientes (mismas que vertical)
     for label, v100, vpp, indent, bold, _ in rows_nutri:
         y += 1
