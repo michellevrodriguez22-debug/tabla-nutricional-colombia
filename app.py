@@ -401,12 +401,11 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
         w,_ = measure_text(draw, t, FONT_LABEL)
         if w > vpp_w_max: vpp_w_max = w
 
-    # AJUSTE PRINCIPAL: Mover todas las columnas de valores hacia la derecha
-    # para alinearlas con la línea del medio y ajustar el marco
+    # AJUSTE: Columnas más compactas, menos espacio entre ellas
     x0 = BORDER_W + left_margin
-    x1 = x0 + CELL_PAD_X + name_w_max + 40  # Más espacio después de los nombres
-    x2 = x1 + v100_w_max + 25  # Más espacio entre "Por 100 g" y "Por porción"
-    x3 = W - BORDER_W - 15  # Marco más cerca del contenido
+    x1 = x0 + 15 + name_w_max + 15  # Columna nombres
+    x2 = x1 + v100_w_max + 10       # Columna "por 100" 
+    x3 = W - BORDER_W - right_margin # Borde derecho
 
     return [x0, x1, x2, x3]
 
@@ -466,8 +465,8 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
     wpp,  _ = measure_text(d, kcal_pp_txt,  FONT_LABEL_B)
 
-    d.text((col_x[2] - 15 - w100, y_text_center), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((col_x[3] - 15 - wpp,  y_text_center), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[2] - 8 - w100, y_text_center), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3] - 8 - wpp,  y_text_center), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
 
     # línea gruesa abajo
     draw_hline(d, BORDER_W, W-BORDER_W, y + row_h, TEXT_COLOR, GRID_W_THICK)
@@ -482,7 +481,7 @@ def draw_fig1():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    W = 1100  # Ancho ajustado
+    W = 950  # Ancho reducido significativamente
     header_h = 140
     gap_after_title = 10
     colhdr_h = 70
@@ -525,10 +524,10 @@ def draw_fig1():
     labels_all = [r[0] for r in rows_nutri] + ([r[0] for r in rows_micro] if show_micro else [])
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=20, right_margin=15)
+    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=10)
 
-    d.text((col_x[2] - 15 - w_c100, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3] - 15 - w_cpp,  y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[2] - 8 - w_c100, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3] - 8 - w_cpp,  y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
 
     # línea fina bajo encabezados de columnas
     y += colhdr_h
@@ -556,8 +555,8 @@ def draw_fig1():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     # micronutrientes
@@ -570,8 +569,8 @@ def draw_fig1():
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
 
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -594,7 +593,7 @@ def draw_fig3():
         ("Proteína",               f"{fmt_one_decimal(protein_100_r)} g",    f"{fmt_one_decimal(protein_pp_r)} g",     0, False),
         ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",         f"{fmt_int(sodium_pp_mg_r)} mg",          0, True),
     ]
-    W = 1000  # Ancho ajustado
+    W = 850  # Ancho reducido significativamente
     header_h = 140
     gap_after_title = 10
     colhdr_h = 70
@@ -627,10 +626,10 @@ def draw_fig3():
     labels_all = [r[0] for r in rows]
     v100_all   = [r[1] for r in rows]
     vpp_all    = [r[2] for r in rows]
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=20, right_margin=15)
+    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=10)
 
-    d.text((col_x[2]-15-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3]-15-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[2]-8-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3]-8-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
 
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
@@ -654,8 +653,8 @@ def draw_fig3():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -671,7 +670,7 @@ def draw_fig4():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    W = 1200  # Ancho ajustado
+    W = 1050  # Ancho reducido significativamente
     header_h = 140
     gap_after_title = 10
     colhdr_h = 70
@@ -705,10 +704,10 @@ def draw_fig4():
     labels_all = [r[0] for r in rows_nutri] + ([r[0] for r in rows_micro] if show_micro else [])
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=20, right_margin=15)
+    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=10)
 
-    d.text((col_x[2]-15-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3]-15-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[2]-8-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3]-8-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
 
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
@@ -731,8 +730,8 @@ def draw_fig4():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -746,8 +745,8 @@ def draw_fig4():
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
 
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
