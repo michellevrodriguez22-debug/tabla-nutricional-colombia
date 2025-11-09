@@ -500,7 +500,7 @@ def draw_fig1():
     show_micro = len(rows_micro) > 0
 
     # ANCHO INICIAL SUFICIENTE para evitar cortes
-    W = 900
+    W = 600
     header_h = 130
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
