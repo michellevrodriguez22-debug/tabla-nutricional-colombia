@@ -6,7 +6,6 @@
 # Entradas por 100 g / 100 mL. Cálculo por porción y kcal corregidos.
 # Bloque "Calorías" con celda combinada (título centrado verticalmente),
 # manteniendo columnas "Por 100" y "Por porción" independientes.
-# Validación interna de sellos (no se imprime) + "Contiene edulcorantes".
 # ============================================================
 
 from io import BytesIO
@@ -190,10 +189,6 @@ household_name = st.sidebar.text_input("Medida casera (p. ej. 1 unidad, 1 taza)"
 household_mass = as_num(st.sidebar.text_input(f"Equivalencia en {portion_unit} (número)", value="40"))
 servings_per_pack = as_num(st.sidebar.text_input("Número de porciones por envase", value="2"))
 
-# Validación no impresa
-st.sidebar.subheader("Validación interna (no se imprime)")
-contains_sweeteners = st.sidebar.checkbox("Contiene edulcorantes", value=False)
-
 st.sidebar.subheader("Micronutrientes a declarar")
 vm_options = [
     "Vitamina A", "Vitamina D", "Vitamina B1", "Vitamina B12",
@@ -319,38 +314,17 @@ for (name, unit), v100 in vm_values.items():
     vm_pp[(name, unit)] = vpp
 
 # ============================================================
-# VALIDACIÓN DE SELLOS (no impresa)
+# CALCULADORA SIMPLIFICADA
 # ============================================================
-def pct_kcal_from(nutrient_kcal, total_kcal_pp):
-    if total_kcal_pp <= 0:
-        return 0.0
-    return 100.0 * nutrient_kcal / total_kcal_pp
+st.sidebar.markdown("---")
+st.sidebar.subheader("Calculadora de Calorías")
 
-sat_pct    = pct_kcal_from(9 * max(sat_fat_pp, 0), max(kcal_pp_raw, 1e-9))
-trans_pct  = pct_kcal_from(9 * max((trans_fat_pp_mg or 0)/1000.0, 0), max(kcal_pp_raw, 1e-9))
-sugadd_pct = pct_kcal_from(4 * max(sug_added_pp, 0), max(kcal_pp_raw, 1e-9))
-
-if is_liquid:
-    sodium_rule = (sodium_100_mg >= 40.0) or ((sodium_pp_mg / max(kcal_pp_raw,1e-9)) >= 1.0)
-else:
-    sodium_rule = (sodium_100_mg >= 300.0) or ((sodium_pp_mg / max(kcal_pp_raw,1e-9)) >= 1.0)
-
-fop_sugar  = sugadd_pct >= 10.0
-fop_sat    = sat_pct    >= 10.0
-fop_trans  = trans_pct  >= 1.0
-fop_sodium = sodium_rule
-fop_sweet  = contains_sweeteners
-
-with st.expander("Resultado de validación informativa (no se imprime)", expanded=False):
-    colf1, colf2, colf3 = st.columns(3)
-    with colf1:
-        st.write(f"Azúcares añadidos ≥10% kcal: **{'Sí' if fop_sugar else 'No'}**")
-        st.write(f"Grasa saturada ≥10% kcal: **{'Sí' if fop_sat else 'No'}**")
-    with colf2:
-        st.write(f"Grasas trans ≥1% kcal: **{'Sí' if fop_trans else 'No'}**")
-        st.write(f"Sodio (criterio aplicable): **{'Sí' if fop_sodium else 'No'}**")
-    with colf3:
-        st.write(f"Contiene edulcorantes: **{'Sí' if fop_sweet else 'No'}**")
+with st.sidebar.expander("Calorías provenientes de azúcares añadidos"):
+    if st.button("Calcular", key="calc_sugar"):
+        sugar_kcal_pp = 4 * sug_added_pp  # 4 kcal por gramo de azúcar
+        sugar_kcal_100 = 4 * sug_added_100
+        st.write(f"**Por porción:** {sugar_kcal_pp:.0f} kcal")
+        st.write(f"**Por 100 g/mL:** {sugar_kcal_100:.0f} kcal")
 
 # ============================================================
 # ESTILO GRÁFICO
@@ -448,23 +422,18 @@ def micro_rows():
     return rows
 
 # ============================================================
-# BLOQUE CALORÍAS CORREGIDO - DISEÑO EXACTO SOLICITADO
+# BLOQUE CALORÍAS CORREGIDO
 # ============================================================
 def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     """
-    Diseño exacto solicitado:
-    ______________________________________
-    |Calorías      |Por 100 g| Por porción |
-    |              |_________|______________|
-    |              |(Valor)  |      (Valor)      |
-    |_____________|_________|_____________|
+    Bloque calorías compacto
     """
     row_h = ROW_H * 2  # Doble altura para las 2 filas
     
     # Línea gruesa arriba
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
     
-    # Título "Calorías" en primera fila - ALINEADO A LA IZQUIERDA
+    # Título "Calorías" en primera fila
     y_text_title = y + (ROW_H // 2) - 14
     d.text((BORDER_W + CELL_PAD_X, y_text_title), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
     
@@ -473,23 +442,19 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     w_c100, _ = measure_text(d, c100, FONT_SMALL_B)
     w_cpp, _ = measure_text(d, cpp, FONT_SMALL_B)
     
-    # Centrar encabezados en sus columnas
-    center_100 = col_x[2] + (col_x[3] - col_x[2]) / 2
-    center_pp = col_x[3] + (W - BORDER_W - col_x[3]) / 2
-    
-    d.text((center_100 - w_c100/2, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((center_pp - w_cpp/2, y_text_title), cpp, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[2] - 8 - w_c100, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3] - 8 - w_cpp, y_text_title), cpp, fill=TEXT_COLOR, font=FONT_SMALL_B)
     
     # Línea horizontal divisoria entre fila de títulos y valores
     draw_hline(d, col_x[1], W-BORDER_W, y + ROW_H, TEXT_COLOR, GRID_W)
     
-    # Valores en segunda fila - CENTRADOS EN SUS COLUMNAS
+    # Valores en segunda fila
     y_text_values = y + ROW_H + (ROW_H // 2) - 14
     w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
     wpp, _ = measure_text(d, kcal_pp_txt, FONT_LABEL_B)
     
-    d.text((center_100 - w100/2, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((center_pp - wpp/2, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[2] - 8 - w100, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3] - 8 - wpp, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
     
     # Línea gruesa abajo
     draw_hline(d, BORDER_W, W-BORDER_W, y + row_h, TEXT_COLOR, GRID_W_THICK)
@@ -505,9 +470,9 @@ def draw_fig1():
     show_micro = len(rows_micro) > 0
 
     # ANCHO OPTIMIZADO
-    W = 720
-    header_h = 130  # Un poco más de espacio
-    gap_after_title = 10  # Más espacio después del título
+    W = 750
+    header_h = 140
+    gap_after_title = 10
     foot_h = 90 if footnote_tail.strip() else 20
 
     body_rows_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
@@ -523,18 +488,18 @@ def draw_fig1():
     # título
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
-    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Más espacio arriba
+    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
 
-    # porciones - MÁS ESPACIO
-    y0 = BORDER_W + 15 + th + 8  # Más espacio después del título
-    d.text((BORDER_W + CELL_PAD_X, y0 + 15),  # Más espacio vertical
+    # porciones
+    y0 = BORDER_W + 15 + th + 8
+    d.text((BORDER_W + CELL_PAD_X, y0 + 15),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 15 + 32),  # Más espacio entre líneas
+    d.text((BORDER_W + CELL_PAD_X, y0 + 15 + 32),
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
-    # línea gruesa tras encabezado - CON MÁS ESPACIO
+    # línea gruesa tras encabezado
     y = BORDER_W + header_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
@@ -545,12 +510,12 @@ def draw_fig1():
     
     col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
     
-    # ENCONTRAR LA POSICIÓN EXACTA PARA ALINEAR CON "AZÚCARES AÑADIDOS"
+    # CORREGIR: Asegurar que la línea quede DESPUÉS de "Azúcares añadidos"
     azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
-    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 20  # +20 para ESPACIO SUFICIENTE
+    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 25  # +25 para ESPACIO SUFICIENTE
     
-    # Ajustar col_x[1] para que la línea quede DESPUÉS del texto
-    if target_x > col_x[1] and target_x < col_x[2] - 50:
+    # Ajustar col_x[1] para que la línea quede claramente después del texto
+    if target_x > col_x[1]:
         col_x[1] = target_x
 
     # BLOQUE CALORÍAS
@@ -558,11 +523,10 @@ def draw_fig1():
     kcal_pp_txt  = f"{fmt_int(kcal_pp)}"
     y = draw_calories_combined_row(d, W, y+1, col_x, kcal_100_txt, kcal_pp_txt)
 
-    # Dibujar líneas verticales DESDE ARRIBA HASTA ABAJO como solicitado
-    data_top = BORDER_W + header_h + 1  # Desde la línea gruesa superior
+    # Dibujar líneas verticales
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
-    draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1], y, data_bottom, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y, data_bottom, TEXT_COLOR, GRID_W)
 
     # filas macronutrientes
     for label, v100, vpp, indent, bold, _ in rows_nutri:
@@ -574,16 +538,10 @@ def draw_fig1():
         y_text  = y + (ROW_H//2) - 14
         
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
-        
-        # Centrar valores en sus columnas como en calorías
-        center_100 = col_x[2] + (col_x[3] - col_x[2]) / 2
-        center_pp = col_x[3] + (W - BORDER_W - col_x[3]) / 2
-        
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        
-        d.text((center_100 - wv100/2, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((center_pp - wvpp/2, y_text), vpp, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     # micronutrientes
@@ -594,16 +552,10 @@ def draw_fig1():
             x_label = BORDER_W + CELL_PAD_X + indent*28
             y_text  = y + (ROW_H_MICRO//2) - 12
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
-            
-            # Centrar valores en sus columnas
-            center_100 = col_x[2] + (col_x[3] - col_x[2]) / 2
-            center_pp = col_x[3] + (W - BORDER_W - col_x[3]) / 2
-            
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            
-            d.text((center_100 - wv100/2, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((center_pp - wvpp/2, y_text), vpp, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
 
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -627,9 +579,8 @@ def draw_fig3():
         ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",         f"{fmt_int(sodium_pp_mg_r)} mg",          0, True),
     ]
     
-    # ANCHO OPTIMIZADO
     W = 720
-    header_h = 130
+    header_h = 140
     gap_after_title = 10
     foot_h = 90 if footnote_tail.strip() else 20
 
@@ -659,21 +610,20 @@ def draw_fig3():
     
     col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
     
-    # ALINEAR CON AZÚCARES AÑADIDOS
+    # CORREGIR: Asegurar espacio después de "Azúcares añadidos"
     azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
-    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 20
+    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 25
     
-    if target_x > col_x[1] and target_x < col_x[2] - 50:
+    if target_x > col_x[1]:
         col_x[1] = target_x
 
     # Calorías
     y = draw_calories_combined_row(d, W, y+1, col_x, fmt_int(kcal_100), fmt_int(kcal_pp))
 
-    # Dibujar líneas verticales DESDE ARRIBA HASTA ABAJO
-    data_top = BORDER_W + header_h + 1
+    # Dibujar líneas verticales
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
-    draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1], y, data_bottom, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y, data_bottom, TEXT_COLOR, GRID_W)
 
     # Filas
     for label, v100, vpp, indent, bold in rows:
@@ -685,16 +635,10 @@ def draw_fig3():
         y_text = y + (ROW_H//2) - 14
         
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
-        
-        # Centrar valores en sus columnas
-        center_100 = col_x[2] + (col_x[3] - col_x[2]) / 2
-        center_pp = col_x[3] + (W - BORDER_W - col_x[3]) / 2
-        
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        
-        d.text((center_100 - wv100/2, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((center_pp - wvpp/2, y_text), vpp, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -703,15 +647,15 @@ def draw_fig3():
     return img
 
 # ============================================================
-# FIGURA 4 — TABULAR (con vertical extra)
+# FIGURA 4 — TABULAR
 # ============================================================
 def draw_fig4():
     rows_nutri = common_rows()
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    W = 750
-    header_h = 130
+    W = 800
+    header_h = 140
     gap_after_title = 10
     foot_h = 90 if footnote_tail.strip() else 20
 
@@ -742,21 +686,20 @@ def draw_fig4():
     
     col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
     
-    # ALINEAR CON AZÚCARES AÑADIDOS
+    # CORREGIR: Asegurar espacio después de "Azúcares añadidos"
     azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
-    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 20
+    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 25
     
-    if target_x > col_x[1] and target_x < col_x[2] - 50:
+    if target_x > col_x[1]:
         col_x[1] = target_x
 
     # Calorías
     y = draw_calories_combined_row(d, W, y+1, col_x, fmt_int(kcal_100), fmt_int(kcal_pp))
 
-    # Dibujar líneas verticales DESDE ARRIBA HASTA ABAJO
-    data_top = BORDER_W + header_h + 1
+    # Dibujar líneas verticales
     data_bottom_limit = H - BORDER_W - foot_h - GRID_W_THICK
-    draw_vline(d, col_x[1], data_top, data_bottom_limit, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], data_top, data_bottom_limit, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1], y, data_bottom_limit, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y, data_bottom_limit, TEXT_COLOR, GRID_W)
 
     # Resto filas
     for label, v100, vpp, indent, bold, _ in rows_nutri:
@@ -768,16 +711,10 @@ def draw_fig4():
         y_text = y + (ROW_H//2) - 14
         
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
-        
-        # Centrar valores en sus columnas
-        center_100 = col_x[2] + (col_x[3] - col_x[2]) / 2
-        center_pp = col_x[3] + (W - BORDER_W - col_x[3]) / 2
-        
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        
-        d.text((center_100 - wv100/2, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((center_pp - wvpp/2, y_text), vpp, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -789,16 +726,10 @@ def draw_fig4():
             x_label = BORDER_W + CELL_PAD_X + indent*28
             y_text = y + (ROW_H_MICRO//2) - 12
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
-            
-            # Centrar valores en sus columnas
-            center_100 = col_x[2] + (col_x[3] - col_x[2]) / 2
-            center_pp = col_x[3] + (W - BORDER_W - col_x[3]) / 2
-            
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            
-            d.text((center_100 - wv100/2, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((center_pp - wvpp/2, y_text), vpp, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
 
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -808,7 +739,7 @@ def draw_fig4():
     return img
 
 # ============================================================
-# FIGURA 5 — LINEAL (sin cambios)
+# FIGURA 5 — LINEAL
 # ============================================================
 def draw_fig5():
     items = []
