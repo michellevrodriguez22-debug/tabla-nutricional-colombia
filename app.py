@@ -401,10 +401,10 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
         w,_ = measure_text(draw, t, FONT_LABEL)
         if w > vpp_w_max: vpp_w_max = w
 
-    # COLUMNAS ULTRA COMPACTAS
+    # COLUMNAS OPTIMIZADAS
     x0 = BORDER_W + left_margin
-    x1 = x0 + 8 + name_w_max + 8  # Reducido de 10+...+10 a 8+...+8
-    x2 = x1 + max(v100_w_max, 100) + 6  # Reducido espacio, mínimo 100px
+    x1 = x0 + 8 + name_w_max + 8
+    x2 = x1 + max(v100_w_max, 90) + 8  # Espacio suficiente para valores
     x3 = W - BORDER_W - right_margin
 
     return [x0, x1, x2, x3]
@@ -448,18 +448,23 @@ def micro_rows():
     return rows
 
 # ============================================================
-# BLOQUE CALORÍAS CORREGIDO - SIN ESPACIO EXTRA
+# BLOQUE CALORÍAS CORREGIDO - DISEÑO EXACTO SOLICITADO
 # ============================================================
 def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     """
-    Bloque calorías compacto sin espacio extra
+    Diseño exacto solicitado:
+    ______________________________________
+    |Calorías      |Por 100 g| Por porción |
+    |              |_________|______________|
+    |              |(Valor)  |      (Valor)      |
+    |_____________|_________|_____________|
     """
     row_h = ROW_H * 2  # Doble altura para las 2 filas
     
-    # Línea gruesa arriba - INMEDIATA
+    # Línea gruesa arriba
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
     
-    # Título "Calorías" en primera fila
+    # Título "Calorías" en primera fila - ALINEADO A LA IZQUIERDA
     y_text_title = y + (ROW_H // 2) - 14
     d.text((BORDER_W + CELL_PAD_X, y_text_title), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
     
@@ -471,16 +476,20 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     d.text((col_x[2] - 8 - w_c100, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
     d.text((col_x[3] - 8 - w_cpp, y_text_title), cpp, fill=TEXT_COLOR, font=FONT_SMALL_B)
     
-    # Línea horizontal divisoria entre filas
+    # Línea horizontal divisoria entre fila de títulos y valores
     draw_hline(d, col_x[1], W-BORDER_W, y + ROW_H, TEXT_COLOR, GRID_W)
     
-    # Valores en segunda fila
+    # Valores en segunda fila - CENTRADOS EN SUS COLUMNAS
     y_text_values = y + ROW_H + (ROW_H // 2) - 14
     w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
     wpp, _ = measure_text(d, kcal_pp_txt, FONT_LABEL_B)
     
-    d.text((col_x[2] - 8 - w100, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((col_x[3] - 8 - wpp, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    # Centrar valores en sus columnas respectivas
+    center_100 = col_x[2] + (col_x[3] - col_x[2]) / 2
+    center_pp = col_x[3] + (W - BORDER_W - col_x[3]) / 2
+    
+    d.text((center_100 - w100/2, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((center_pp - wpp/2, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
     
     # Línea gruesa abajo
     draw_hline(d, BORDER_W, W-BORDER_W, y + row_h, TEXT_COLOR, GRID_W_THICK)
@@ -495,10 +504,10 @@ def draw_fig1():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    # ANCHO MÁS COMPACTO
-    W = 750
-    header_h = 120  # Reducido
-    gap_after_title = 5  # Reducido
+    # ANCHO MÁS COMPACTO PERO SUFICIENTE
+    W = 700
+    header_h = 120
+    gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
 
     body_rows_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
@@ -516,16 +525,16 @@ def draw_fig1():
     tw, th = measure_text(d, title, FONT_TITLE)
     d.text(((W - tw)//2, BORDER_W + 10), title, fill=TEXT_COLOR, font=FONT_TITLE)
 
-    # porciones - MÁS COMPACTO
+    # porciones - COMPACTO
     y0 = BORDER_W + 10 + th + 4
     d.text((BORDER_W + CELL_PAD_X, y0 + 12),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 12 + 28),  # Reducido espacio vertical
+    d.text((BORDER_W + CELL_PAD_X, y0 + 12 + 28),
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
-    # línea gruesa tras encabezado - MÁS CERCANA
+    # línea gruesa tras encabezado
     y = BORDER_W + header_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
@@ -534,16 +543,17 @@ def draw_fig1():
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
     
-    # ENCONTRAR LA POSICIÓN EXACTA PARA ALINEAR CON "AZÚCARES AÑADIDOS"
-    azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
     col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
     
-    # AJUSTAR col_x[1] para que la línea quede después de "Azúcares añadidos"
-    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 10  # +10 para pequeño espacio
-    if target_x > col_x[1]:
+    # ENCONTRAR LA POSICIÓN EXACTA PARA ALINEAR CON "AZÚCARES AÑADIDOS"
+    azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
+    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 15  # +15 para espacio adecuado
+    
+    # Ajustar col_x[1] solo si es necesario y no sobrepone otros elementos
+    if target_x > col_x[1] and target_x < col_x[2] - 50:  # Verificar que haya espacio suficiente
         col_x[1] = target_x
 
-    # BLOQUE CALORÍAS - SIN ESPACIO EXTRA
+    # BLOQUE CALORÍAS
     kcal_100_txt = f"{fmt_int(kcal_100)}"
     kcal_pp_txt  = f"{fmt_int(kcal_pp)}"
     y = draw_calories_combined_row(d, W, y+1, col_x, kcal_100_txt, kcal_pp_txt)
@@ -604,8 +614,8 @@ def draw_fig3():
         ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",         f"{fmt_int(sodium_pp_mg_r)} mg",          0, True),
     ]
     
-    # ANCHO MÁS COMPACTO
-    W = 650
+    # ANCHO MÁS AMPLIO PARA EVITAR SUPERPOCISIÓN
+    W = 720
     header_h = 120
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
@@ -634,12 +644,13 @@ def draw_fig3():
     v100_all   = [r[1] for r in rows]
     vpp_all    = [r[2] for r in rows]
     
-    # ALINEAR CON AZÚCARES AÑADIDOS
-    azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
     col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
     
-    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 10
-    if target_x > col_x[1]:
+    # ALINEAR CON AZÚCARES AÑADIDOS
+    azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
+    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 15
+    
+    if target_x > col_x[1] and target_x < col_x[2] - 50:
         col_x[1] = target_x
 
     # Calorías
@@ -679,7 +690,7 @@ def draw_fig4():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    W = 800  # Más compacto
+    W = 750  # Más compacto pero suficiente
     header_h = 120
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
@@ -709,12 +720,13 @@ def draw_fig4():
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
     
-    # ALINEAR CON AZÚCARES AÑADIDOS
-    azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
     col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
     
-    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 10
-    if target_x > col_x[1]:
+    # ALINEAR CON AZÚCARES AÑADIDOS
+    azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
+    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 15
+    
+    if target_x > col_x[1] and target_x < col_x[2] - 50:
         col_x[1] = target_x
 
     # Calorías
