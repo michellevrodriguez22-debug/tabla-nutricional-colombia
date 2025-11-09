@@ -379,55 +379,69 @@ def column_labels():
     return ("Por 100 g" if not is_liquid else "Por 100 mL", "Por porción")
 
 # ============== Helper: medición y columnas compactas por contenido ==============
-def measure_text(draw, text, font):
 
+# ============== Helper: medición y columnas compactas por contenido ==============
+def measure_text(draw, text, font):
+    """Devuelve (ancho, alto) en píxeles del texto con la fuente dada."""
+    try:
+        bbox = draw.textbbox((0, 0), str(text), font=font)
+        return bbox[2] - bbox[0], bbox[3] - bbox[1]
+    except Exception:
+        # Fallback defensivo
+        return (len(str(text)) * 8, 16)
 
 def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, right_margin=20):
     """
     Calcula posiciones de columnas en base al contenido más largo.
-    Evita columna fantasma; deja "Por porción" pegada al borde interno.
+    Genera 3 columnas visibles:
+      - Col 0: margen izquierdo (borde externo)
+      - Col 1: fin de la columna de "Nombre del nutriente"
+      - Col 2: fin de la columna "Por 100"
+      - Col 3: borde derecho (fin de "Por porción")
+    Deja “Por 100” y “Por porción” prácticamente pegadas, con un gap mínimo.
     """
+    # Medir el ancho máximo de cada bloque de texto
     name_w_max = 0
     for t in labels:
-    w,_ = measure_text(draw, t, FONT_LABEL)
-    if w > name_w_max: name_w_max = w
+        w, _ = measure_text(draw, t, FONT_LABEL)
+        if w > name_w_max:
+            name_w_max = w
 
     v100_w_max = 0
     for t in v100_list:
-    w,_ = measure_text(draw, t, FONT_LABEL)
-    if w > v100_w_max: v100_w_max = w
+        w, _ = measure_text(draw, t, FONT_LABEL)
+        if w > v100_w_max:
+            v100_w_max = w
 
     vpp_w_max = 0
     for t in vpp_list:
-    w,_ = measure_text(draw, t, FONT_LABEL)
-    if w > vpp_w_max: vpp_w_max = w
+        w, _ = measure_text(draw, t, FONT_LABEL)
+        if w > vpp_w_max:
+            vpp_w_max = w
 
-    # Columnas: [borde izq, después de nombres, después de por100, borde der]
-    x0 = BORDER_W + left_margin
-    x1 = x0 + CELL_PAD_X + name_w_max + CELL_PAD_X                  # fin columna de nombres
-    x2 = x1 + v100_w_max + CELL_PAD_X + 5                          # fin "por 100"
-    x3 = x2 + vpp_w_max + CELL_PAD_X + 5                              # borde derecho interno
+    # Gaps mínimos para compactar columnas
+    GAP_MIN = 6   # separa las columnas sin que se superponga el texto
 
-    # Si porción necesita más, ajusta x2 para dejar espacio al valor por porción
-    # Alinearemos los números a la derecha de sus columnas
-    return [x0 - (BORDER_W-0), x1, x2, x3]
+    # Columna 0 (borde izquierdo)
+    x0 = BORDER_W + max(0, left_margin - BORDER_W)
 
-    # ============================================================
-    # FILAS (usando redondeos)
-    # ============================================================def common_rows():
-    # Valores con formatos pedidos por nutriente
-    rows = [
-        ("Grasa total",            f"{fmt_one_decimal(fat_total_100_r)} g",     f"{fmt_one_decimal(fat_total_pp_r)} g",       0, False, False),
-        ("  Grasa saturada",       f"{fmt_one_decimal(sat_fat_100_r)} g",       f"{fmt_one_decimal(sat_fat_pp_r)} g",         1, True,  False),
-        ("  Grasas trans",         f"{fmt_int(trans_fat_100_mg_r)} mg",         f"{fmt_int(trans_fat_pp_mg_r)} mg",           1, True,  False),
-        ("Carbohidratos totales",  f"{fmt_carbs_rule(carb_100_r)} g",           f"{fmt_carbs_rule(carb_pp_r)} g",             0, False, False),
-        ("  Fibra dietaria",       f"{fmt_one_decimal(fiber_100_r)} g",         f"{fmt_one_decimal(fiber_pp_r)} g",           1, False, False),
-        ("  Azúcares totales",     f"{fmt_one_decimal(sug_total_100_r)} g",     f"{fmt_one_decimal(sug_total_pp_r)} g",       1, False, False),
-        ("  Azúcares añadidos",    f"{fmt_one_decimal(sug_added_100_r)} g",     f"{fmt_one_decimal(sug_added_pp_r)} g",       1, True,  False),
-        ("Proteína",               f"{fmt_one_decimal(protein_100_r)} g",       f"{fmt_one_decimal(protein_pp_r)} g",         0, False, False),
-        ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",            f"{fmt_int(sodium_pp_mg_r)} mg",              0, True,  False),
-    ]
-    return rows
+    # Límite de la columna de nombres (columna 1)
+    x1 = x0 + CELL_PAD_X + name_w_max + GAP_MIN
+
+    # Límite de "Por 100" (columna 2)
+    x2 = x1 + CELL_PAD_X + v100_w_max + GAP_MIN
+
+    # Borde derecho según “Por porción” (columna 3)
+    x3 = x2 + CELL_PAD_X + vpp_w_max + right_margin
+
+    # Respeta el ancho total W: no exceder el borde derecho
+    x3 = min(x3, W - BORDER_W)
+    # En caso extremo, si x3 quedó antes de x2 por recorte, reabrir pequeños gaps
+    if x3 <= x2 + GAP_MIN:
+        x3 = x2 + GAP_MIN + 1
+
+    return [x0, x1, x2, x3]
+
 
 def micro_rows():
     # Orden solicitado: Hierro antes que Calcio
