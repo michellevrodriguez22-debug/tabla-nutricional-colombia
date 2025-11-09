@@ -389,10 +389,10 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     # Usar el MÁXIMO entre todos los nombres y "Azúcares añadidos" específicamente + MARGEN EXTRA
     final_name_width = max(name_w_max, azucares_added_width) + 15  # MARGEN EXTRA de 15 píxeles
 
-    # Espacios entre columnas - AUMENTADOS SIGNIFICATIVAMENTE
-    name_to_values_gap = 35  # Aumentado significativamente de 30
+    # Espacios entre columnas
+    name_to_values_gap = 35
     values_gap = 20
-    right_margin = 20
+    right_margin = 15  # REDUCIDO de 20 a 15
 
     # Calcular posiciones basadas en el contenido real
     x0 = BORDER_W + CELL_PAD_X  # Inicio de nombres
@@ -405,8 +405,8 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     
     x2 = x1 + col100_width + values_gap  # Línea entre columnas de valores
     
-    # Ancho para columna "Por porción" - usar el máximo entre valores y encabezado + margen
-    colpp_width = max(vpp_w_max, colpp_w) + 15
+    # Ancho para columna "Por porción" - usar el máximo entre valores y encabezado + margen REDUCIDO
+    colpp_width = max(vpp_w_max, colpp_w) + 8  # REDUCIDO de 15 a 8
     
     x3 = x2 + colpp_width + right_margin  # Fin de la tabla
 
@@ -501,8 +501,8 @@ def draw_fig1():
 
     # ANCHO INICIAL SUFICIENTE para evitar cortes
     W = 900
-    header_h = 95  # REDUCIDO SIGNIFICATIVAMENTE de 115 a 95 píxeles
-    gap_after_title = 3  # Reducido de 5
+    header_h = 130
+    gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
 
     body_rows_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
@@ -532,14 +532,14 @@ def draw_fig1():
     # título
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
-    d.text(((W - tw)//2, BORDER_W + 8), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Reducido de 12 a 8
+    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
 
-    # porciones - texto con ESPACIO MUY REDUCIDO
-    y0 = BORDER_W + 8 + th + 5  # Reducido de 8 a 5
+    # porciones
+    y0 = BORDER_W + 15 + th + 12
     d.text((BORDER_W + CELL_PAD_X, y0),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 22),  # Reducido de 28 a 22
+    d.text((BORDER_W + CELL_PAD_X, y0 + 35),
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
