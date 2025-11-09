@@ -12,7 +12,6 @@ from io import BytesIO
 from datetime import datetime
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
-from textwrap import wrap
 
 # --- Parche seguro: helpers de líneas por si no están en global ---
 if 'draw_hline' not in globals():
@@ -593,15 +592,7 @@ def draw_fig1():
 
     # pie (opcional)
     if footnote_tail.strip():
-        # Texto del pie (autoajustable en ancho)
-if footnote_tail.strip():
-    texto_pie = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
-    max_width = W - 2*(BORDER_W + CELL_PAD_X)
-    lineas = wrap(texto_pie, width=60)
-    y_pie = y + 15
-    for linea in lineas:
-        d.text((BORDER_W + CELL_PAD_X, y_pie), linea, fill=TEXT_COLOR, font=FONT_SMALL)
-        y_pie += 30
+        d.text((BORDER_W + CELL_PAD_X, y + 15), f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 # ============================================================
@@ -687,15 +678,7 @@ def draw_fig3():
 
     # Pie SIEMPRE visible
     tail = footnote_tail.strip()
-    # Texto del pie (autoajustable en ancho)
-if footnote_tail.strip():
-    texto_pie = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
-    max_width = W - 2*(BORDER_W + CELL_PAD_X)
-    lineas = wrap(texto_pie, width=60)
-    y_pie = y + 15
-    for linea in lineas:
-        d.text((BORDER_W + CELL_PAD_X, y_pie), linea, fill=TEXT_COLOR, font=FONT_SMALL)
-        y_pie += 30
+    d.text((BORDER_W + CELL_PAD_X, y + 15), f"No es fuente significativa de {tail}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
 
