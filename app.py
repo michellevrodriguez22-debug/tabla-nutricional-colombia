@@ -803,10 +803,44 @@ def draw_fig5():
 
     y = draw_inline_chunks(d, x, y, max_text_width, line_h, chunks_porcion)
 
-    # Pie opcional (si se escribió)
+    # Pie opcional (si se escribió) - CON DIVISIÓN EN MÚLTIPLES LÍNEAS
     if footnote_tail.strip():
         draw_hline(d, BORDER_W, W-BORDER_W, y+6, TEXT_COLOR, GRID_W_THICK)
-        d.text((BORDER_W + CELL_PAD_X, y + 18), f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}", fill=TEXT_COLOR, font=FONT_SMALL)
+        
+        # Texto base
+        base_text = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
+        
+        # Dividir texto en líneas si es demasiado largo
+        max_line_width = W - 2*BORDER_W - 2*CELL_PAD_X
+        lines = []
+        words = base_text.split(' ')
+        current_line = []
+        
+        for word in words:
+            # Probar si añadiendo la palabra actual excede el ancho máximo
+            test_line = ' '.join(current_line + [word])
+            test_width, _ = measure_text(d, test_line, FONT_SMALL)
+            
+            if test_width <= max_line_width:
+                current_line.append(word)
+            else:
+                # Si la línea actual tiene contenido, guardarla y empezar nueva línea
+                if current_line:
+                    lines.append(' '.join(current_line))
+                current_line = [word]
+        
+        # Añadir la última línea
+        if current_line:
+            lines.append(' '.join(current_line))
+        
+        # Dibujar las líneas
+        line_spacing = 8
+        current_y = y + 18
+        
+        for line in lines:
+            d.text((BORDER_W + CELL_PAD_X, current_y), line, fill=TEXT_COLOR, font=FONT_SMALL)
+            current_y += FONT_SMALL.size + line_spacing
+    
     return img
 
 # ============================================================
