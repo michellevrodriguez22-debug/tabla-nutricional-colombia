@@ -267,7 +267,7 @@ sodium_pp_mg    = portion_from_per100(sodium_100_mg, portion_size)
 kcal_100_raw = kcal_from_macros(fat_total_100, carb_100, protein_100)
 kcal_pp_raw  = kcal_from_macros(fat_total_pp,  carb_pp,  protein_pp)
 
-# Aplicar “no significativas” por nutriente (criterios prácticos)
+# Aplicar "no significativas" por nutriente (criterios prácticos)
 def nonsig_zero_g(name, v):
     # Cero solo para grasas clave; no anular carbohidratos/azúcares/fibra/proteína
     if name == "Grasa total" and v < 0.5: return 0.0
@@ -401,11 +401,11 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
         w,_ = measure_text(draw, t, FONT_LABEL)
         if w > vpp_w_max: vpp_w_max = w
 
-    # AJUSTE: Columnas más compactas, menos espacio entre ellas
+    # AJUSTE: Columnas MÁS COMPACTAS - reducido significativamente
     x0 = BORDER_W + left_margin
-    x1 = x0 + 15 + name_w_max + 15  # Columna nombres
-    x2 = x1 + v100_w_max + 10       # Columna "por 100" 
-    x3 = W - BORDER_W - right_margin # Borde derecho
+    x1 = x0 + 10 + name_w_max + 10  # Reducido de 15+...+15 a 10+...+10
+    x2 = x1 + v100_w_max + 8        # Reducido de 10 a 8
+    x3 = W - BORDER_W - right_margin
 
     return [x0, x1, x2, x3]
 
@@ -481,7 +481,8 @@ def draw_fig1():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    W = 950  # Ancho reducido significativamente
+    # ANCHO REDUCIDO SIGNIFICATIVAMENTE - de 950 a 800
+    W = 800
     header_h = 140
     gap_after_title = 10
     colhdr_h = 70
@@ -552,6 +553,18 @@ def draw_fig1():
         font_val = FONT_LABEL_B if bold else FONT_LABEL
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text  = y + (ROW_H//2) - 14
+        
+        # ESPECIAL: Para "Azúcares añadidos", alinear la línea vertical con el final del texto
+        if label == "  Azúcares añadidos":
+            # Medir el ancho del texto "  Azúcares añadidos"
+            label_width, _ = measure_text(d, label, font_lbl)
+            # Ajustar la posición de la línea vertical para que coincida con el final del texto
+            col_x[1] = x_label + label_width + 15  # +15 para un pequeño espacio
+            
+            # Redibujar las líneas verticales con la nueva posición
+            draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)
+            draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
+        
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
@@ -593,7 +606,8 @@ def draw_fig3():
         ("Proteína",               f"{fmt_one_decimal(protein_100_r)} g",    f"{fmt_one_decimal(protein_pp_r)} g",     0, False),
         ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",         f"{fmt_int(sodium_pp_mg_r)} mg",          0, True),
     ]
-    W = 850  # Ancho reducido significativamente
+    # ANCHO REDUCIDO SIGNIFICATIVAMENTE - de 850 a 700
+    W = 700
     header_h = 140
     gap_after_title = 10
     colhdr_h = 70
@@ -650,6 +664,18 @@ def draw_fig3():
         font_val = FONT_LABEL_B if bold else FONT_LABEL
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text = y + (ROW_H//2) - 14
+        
+        # ESPECIAL: Para "Azúcares añadidos", alinear la línea vertical con el final del texto
+        if label == "  Azúcares añadidos":
+            # Medir el ancho del texto "  Azúcares añadidos"
+            label_width, _ = measure_text(d, label, font_lbl)
+            # Ajustar la posición de la línea vertical para que coincida con el final del texto
+            col_x[1] = x_label + label_width + 15  # +15 para un pequeño espacio
+            
+            # Redibujar las líneas verticales con la nueva posición
+            draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)
+            draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
+        
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
@@ -670,7 +696,8 @@ def draw_fig4():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    W = 1050  # Ancho reducido significativamente
+    # ANCHO REDUCIDO SIGNIFICATIVAMENTE - de 1050 a 900
+    W = 900
     header_h = 140
     gap_after_title = 10
     colhdr_h = 70
@@ -727,6 +754,18 @@ def draw_fig4():
         font_val = FONT_LABEL_B if bold else FONT_LABEL
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text = y + (ROW_H//2) - 14
+        
+        # ESPECIAL: Para "Azúcares añadidos", alinear la línea vertical con el final del texto
+        if label == "  Azúcares añadidos":
+            # Medir el ancho del texto "  Azúcares añadidos"
+            label_width, _ = measure_text(d, label, font_lbl)
+            # Ajustar la posición de la línea vertical para que coincida con el final del texto
+            col_x[1] = x_label + label_width + 15  # +15 para un pequeño espacio
+            
+            # Redibujar las líneas verticales con la nueva posición
+            draw_vline(d, col_x[1], y, data_bottom_limit, TEXT_COLOR, GRID_W)
+            draw_vline(d, col_x[2], y, data_bottom_limit, TEXT_COLOR, GRID_W)
+        
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
