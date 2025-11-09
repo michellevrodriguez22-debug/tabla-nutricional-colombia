@@ -167,13 +167,11 @@ def fmt_micro_value(name, unit, v):
     else:
         return f"{int(round(v))} {unit}"
 default=["Vitamina A","Calcio","Hierro","Vitamina D","Zinc"]
-)
 
 st.sidebar.subheader("Texto al pie")
 footnote_tail = st.sidebar.text_input(
     "Completa: No es fuente significativa de ...",
     value=""
-)
 
 # ============================================================
 # ENTRADAS (CUERPO PRINCIPAL) — por 100 g/mL
