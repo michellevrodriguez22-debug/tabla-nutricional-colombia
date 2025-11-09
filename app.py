@@ -551,10 +551,7 @@ def draw_fig1():
     # LÍNEA GRUESA INFERIOR - después de micronutrientes
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
 
-    # DIBUJAR LÍNEAS VERTICALES DESDE ARRIBA HASTA ABAJO
-    draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
-
+    
     # filas macronutrientes
     for label, v100, vpp, indent, bold, _ in rows_nutri:
         y += 1
@@ -588,6 +585,11 @@ def draw_fig1():
             d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
             d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
+
+    # LÍNEAS VERTICALES (hasta el final de los micronutrientes)
+    draw_vline(d, col_x[1], y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y_header_bottom, y, TEXT_COLOR, GRID_W)
+
 
     # Línea gruesa final
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
