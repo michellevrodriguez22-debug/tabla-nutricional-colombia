@@ -392,7 +392,7 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     # Espacios entre columnas
     name_to_values_gap = 35
     values_gap = 20
-    right_margin = 15  # REDUCIDO de 20 a 15
+    right_margin = 8  # REDUCIDO de 20 a 15
 
     # Calcular posiciones basadas en el contenido real
     x0 = BORDER_W + CELL_PAD_X  # Inicio de nombres
@@ -406,7 +406,7 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     x2 = x1 + col100_width + values_gap  # Línea entre columnas de valores
     
     # Ancho para columna "Por porción" - usar el máximo entre valores y encabezado + margen REDUCIDO
-    colpp_width = max(vpp_w_max, colpp_w) + 8  # REDUCIDO de 15 a 8
+    colpp_width = max(vpp_w_max, colpp_w) + 4  # REDUCIDO de 15 a 8
     
     x3 = x2 + colpp_width + right_margin  # Fin de la tabla
 
