@@ -15,6 +15,25 @@ from datetime import datetime
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
+def get_font(size, bold=False):
+    try:
+        font_path = (
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+            if bold
+            else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+        )
+        return ImageFont.truetype(font_path, size)
+    except:
+        return ImageFont.load_default()
+
+def draw_hline(draw, x0, x1, y, color, width):
+    draw.line((x0, y, x1, y), fill=color, width=width)
+
+def draw_vline(draw, x, y0, y1, color, width):
+    draw.line((x, y0, x, y1), fill=color, width=width)
+
+
+
 # ============================================================
 # CONFIG
 # ============================================================
@@ -361,8 +380,7 @@ def column_labels():
 
 # ============== Helper: medición y columnas compactas por contenido ==============
 def measure_text(draw, text, font):
-    bbox = draw.textbbox((0,0), text, font=font)
-    return bbox[2]-bbox[0], bbox[3]-bbox[1]
+
 
 def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, right_margin=20):
     """
@@ -387,8 +405,8 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
     # Columnas: [borde izq, después de nombres, después de por100, borde der]
     x0 = BORDER_W + left_margin
     x1 = x0 + CELL_PAD_X + name_w_max + CELL_PAD_X                  # fin columna de nombres
-    x2 = x1 + v100_w_max + CELL_PAD_X + 10                          # fin "por 100"
-    x3 = (W - BORDER_W - right_margin)                              # borde derecho interno
+    x2 = x1 + v100_w_max + CELL_PAD_X + 5                          # fin "por 100"
+    x3 = x2 + vpp_w_max + CELL_PAD_X + 5                              # borde derecho interno
 
     # Si porción necesita más, ajusta x2 para dejar espacio al valor por porción
     # Alinearemos los números a la derecha de sus columnas
