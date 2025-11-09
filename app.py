@@ -383,30 +383,33 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     col100_w, _ = measure_text(draw, col100_label, FONT_SMALL_B)
     colpp_w, _ = measure_text(draw, colpp_label, FONT_SMALL_B)
 
-    # Espacios entre columnas
-    name_to_values_gap = 20
-    values_gap = 15
-    right_margin = 15
+    # Espacios entre columnas - AUMENTADOS para evitar cortes
+    name_to_values_gap = 25  # Aumentado de 20
+    values_gap = 20  # Aumentado de 15
+    right_margin = 20  # Aumentado de 15
 
     # Calcular posiciones basadas en el contenido real
     x0 = BORDER_W + CELL_PAD_X  # Inicio de nombres
-    x1 = x0 + name_w_max + name_to_values_gap  # Línea después de nombres
     
-    # Ancho para columna "Por 100" - usar el máximo entre valores y encabezado
-    col100_width = max(v100_w_max, col100_w) + 10
+    # Asegurar que la línea quede DESPUÉS del texto más largo (Azúcares añadidos)
+    azucares_added_width, _ = measure_text(draw, "  Azúcares añadidos", FONT_LABEL)
+    x1 = x0 + max(name_w_max, azucares_added_width) + name_to_values_gap  # Línea después de nombres
+    
+    # Ancho para columna "Por 100" - usar el máximo entre valores y encabezado + margen
+    col100_width = max(v100_w_max, col100_w) + 15  # Aumentado de 10
     
     x2 = x1 + col100_width + values_gap  # Línea entre columnas de valores
     
-    # Ancho para columna "Por porción" - usar el máximo entre valores y encabezado
-    colpp_width = max(vpp_w_max, colpp_w) + 10
+    # Ancho para columna "Por porción" - usar el máximo entre valores y encabezado + margen
+    colpp_width = max(vpp_w_max, colpp_w) + 15  # Aumentado de 10
     
     x3 = x2 + colpp_width + right_margin  # Fin de la tabla
 
     # Calcular ancho total necesario
     total_width_needed = x3
     
-    # Si el ancho necesario es menor que el actual, reducirlo
-    if total_width_needed < W:
+    # Si el ancho necesario es mayor que el actual, aumentarlo
+    if total_width_needed > W:
         W = total_width_needed + BORDER_W * 2
 
     return [x0, x1, x2, x3], W
@@ -467,8 +470,8 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     w_c100, _ = measure_text(d, c100, FONT_SMALL_B)
     w_cpp, _ = measure_text(d, cpp, FONT_SMALL_B)
     
-    d.text((col_x[2] - 10 - w_c100, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3] - 10 - w_cpp, y_text_title), cpp, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[2] - 15 - w_c100, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3] - 15 - w_cpp, y_text_title), cpp, fill=TEXT_COLOR, font=FONT_SMALL_B)
     
     # Línea horizontal divisoria entre fila de títulos y valores
     draw_hline(d, col_x[1], W-BORDER_W, y + ROW_H, TEXT_COLOR, GRID_W)
@@ -478,8 +481,8 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
     wpp, _ = measure_text(d, kcal_pp_txt, FONT_LABEL_B)
     
-    d.text((col_x[2] - 10 - w100, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((col_x[3] - 10 - wpp, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[2] - 15 - w100, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3] - 15 - wpp, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
     
     return y + row_h
 
@@ -491,9 +494,9 @@ def draw_fig1():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    # ANCHO INICIAL MÁS PEQUEÑO - se ajustará al contenido
-    W = 700  # Reducido significativamente de 900
-    header_h = 100  # Reducido para menos espacio en porciones
+    # ANCHO INICIAL SUFICIENTE para evitar cortes
+    W = 800  # Aumentado de 700 para evitar cortes
+    header_h = 110  # Suficiente para el título y porciones
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
 
@@ -524,14 +527,14 @@ def draw_fig1():
     # título
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
-    d.text(((W - tw)//2, BORDER_W + 8), title, fill=TEXT_COLOR, font=FONT_TITLE)
+    d.text(((W - tw)//2, BORDER_W + 12), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Aumentado espacio superior
 
-    # porciones - texto más compacto
-    y0 = BORDER_W + 8 + th + 3
+    # porciones - texto con espacio suficiente
+    y0 = BORDER_W + 12 + th + 8  # Aumentado espacio
     d.text((BORDER_W + CELL_PAD_X, y0),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 26),
+    d.text((BORDER_W + CELL_PAD_X, y0 + 30),  # Aumentado espacio entre líneas
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
@@ -566,8 +569,8 @@ def draw_fig1():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-10-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-10-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     # LÍNEA GRUESA entre macronutrientes y micronutrientes (si hay micronutrientes)
@@ -584,8 +587,8 @@ def draw_fig1():
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-10-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-10-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
 
     # Línea gruesa final
