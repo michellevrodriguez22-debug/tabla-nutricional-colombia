@@ -428,11 +428,15 @@ def common_rows():
         ("Proteína",               f"{fmt_one_decimal(protein_100_r)} g",       f"{fmt_one_decimal(protein_pp_r)} g",         0, False, False),
         ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",            f"{fmt_int(sodium_pp_mg_r)} mg",              0, True,  False),
     ]
-        # Inserción condicional de polialcoholes
-    if include_poly:
-        rows.append(("  Polialcoholes", f"{fmt_one_decimal(poly_100_r)} g", f"{fmt_one_decimal(poly_pp_r)} g", 1, False, False))
-
-    return rows
+    
+    # Polialcoholes: después de Fibra dietaria y antes de Azúcares totales
+    if ("include_poly" in globals() or "include_poly" in locals()) and include_poly:
+        try:
+            idx_azuc_tot = next(i for i, r in enumerate(rows) if r[0].strip() == "Azúcares totales")
+            rows.insert(idx_azuc_tot, ("  Polialcoholes", f"{fmt_one_decimal(poly_100_r)} g", f"{fmt_one_decimal(poly_pp_r)} g", 1, False, False))
+        except StopIteration:
+            pass
+return rows
 
 def micro_rows():
     # Orden solicitado: Hierro antes que Calcio
