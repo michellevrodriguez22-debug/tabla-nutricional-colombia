@@ -15,6 +15,18 @@ from datetime import datetime
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
+def get_font(size, bold=False):
+    try:
+        font_path = (
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+            if bold
+            else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+        )
+        return ImageFont.truetype(font_path, size)
+    except:
+        return ImageFont.load_default()
+
+
 # ============================================================
 # CONFIG
 # ============================================================
