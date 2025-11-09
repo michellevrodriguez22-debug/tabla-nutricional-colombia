@@ -386,18 +386,18 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     # Medir específicamente "Azúcares añadidos" para asegurar espacio suficiente
     azucares_added_width, _ = measure_text(draw, "  Azúcares añadidos", FONT_LABEL)
     
-    # Usar el MÁXIMO entre todos los nombres y "Azúcares añadidos" específicamente
-    final_name_width = max(name_w_max, azucares_added_width)
+    # Usar el MÁXIMO entre todos los nombres y "Azúcares añadidos" específicamente + MARGEN EXTRA
+    final_name_width = max(name_w_max, azucares_added_width) + 15  # MARGEN EXTRA de 15 píxeles
 
-    # Espacios entre columnas
-    name_to_values_gap = 30  # Aumentado para dar más espacio después de nombres
+    # Espacios entre columnas - AUMENTADOS SIGNIFICATIVAMENTE
+    name_to_values_gap = 35  # Aumentado significativamente de 30
     values_gap = 20
     right_margin = 20
 
     # Calcular posiciones basadas en el contenido real
     x0 = BORDER_W + CELL_PAD_X  # Inicio de nombres
     
-    # Asegurar que la línea quede BIEN DESPUÉS del texto más largo
+    # Asegurar que la línea quede BIEN DESPUÉS del texto más largo CON MARGEN EXTRA
     x1 = x0 + final_name_width + name_to_values_gap  # Línea después de nombres
     
     # Ancho para columna "Por 100" - usar el máximo entre valores y encabezado + margen
@@ -500,8 +500,8 @@ def draw_fig1():
     show_micro = len(rows_micro) > 0
 
     # ANCHO INICIAL SUFICIENTE para evitar cortes
-    W = 850  # Aumentado para dar más espacio al encabezado
-    header_h = 130  # AUMENTADO SIGNIFICATIVAMENTE para dar más espacio al texto de porciones
+    W = 900  # Aumentado significativamente a 900 píxeles
+    header_h = 130  # Suficiente espacio para el encabezado
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
 
@@ -532,18 +532,18 @@ def draw_fig1():
     # título
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
-    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Aumentado espacio superior
+    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
 
     # porciones - texto con ESPACIO SUFICIENTE
-    y0 = BORDER_W + 15 + th + 12  # Aumentado espacio significativamente
+    y0 = BORDER_W + 15 + th + 12
     d.text((BORDER_W + CELL_PAD_X, y0),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 35),  # Aumentado espacio entre líneas
+    d.text((BORDER_W + CELL_PAD_X, y0 + 35),
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
-    # línea gruesa tras encabezado - DEBE ESTAR DESPUÉS del texto de porciones
+    # línea gruesa tras encabezado
     y_header_bottom = BORDER_W + header_h
     draw_hline(d, BORDER_W, W-BORDER_W, y_header_bottom, TEXT_COLOR, GRID_W_THICK)
 
@@ -605,6 +605,20 @@ def draw_fig1():
     return img
 
 # ============================================================
+# FIGURA 3 — SIMPLIFICADO
+# ============================================================
+def draw_fig3():
+    # Por ahora usamos la misma función que vertical estándar
+    return draw_fig1()
+
+# ============================================================
+# FIGURA 5 — LINEAL
+# ============================================================
+def draw_fig5():
+    # Por ahora usamos la misma función que vertical estándar
+    return draw_fig1()
+
+# ============================================================
 # PREVISUALIZACIÓN + EXPORTACIÓN
 # ============================================================
 st.header("Previsualización")
@@ -616,9 +630,9 @@ with left:
     if format_choice.startswith("Fig. 1"):
         img_prev = draw_fig1()
     elif format_choice.startswith("Fig. 3"):
-        img_prev = draw_fig1()  # Temporalmente usar vertical para simplificado
+        img_prev = draw_fig3()
     else:
-        img_prev = draw_fig1()  # Temporalmente usar vertical para lineal
+        img_prev = draw_fig5()
     st.image(img_prev, caption="Vista previa (PNG)", use_column_width=True)
 
 if export_btn:
