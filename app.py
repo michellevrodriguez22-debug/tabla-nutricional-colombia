@@ -139,66 +139,34 @@ def fmt_default_g(x):
 # Micronutrientes (reglas de visualización)
 def fmt_micro_value(name, unit, v):
     """
-    Reglas pedidas:
-    - Vitamina A: si tiene menos de 2 cifras (<10) incluir un decimal. Unidad: µg ER.
-    - Vitamina D: si <1 incluir 2 decimales; si una cifra (<10) 1 decimal; si 3 cifras (>=100) sin decimales.
-    - Resto: si 3 cifras (>=100) sin decimales; si una cifra (<10) 1 decimal; en otros casos 0 o 1 decimal según magnitud.
+    Formateo de micronutrientes según Resolución 810/2021:
+    - Si el valor es <1 → 2 decimales
+    - Si está entre 1 y 10 → 1 decimal
+    - Si es >=100 → sin decimales
+    - Vitamina A → unidad µg ER
+    - Vitamina D → unidad µg
     """
     try:
         v = float(v)
     except:
         return f"0 {unit}"
-    # Unidad especial para Vitamina A
+
+    # Ajuste de unidad especial
     if name == "Vitamina A":
         unit = "µg ER"
-        if abs(v) < 10:
-            return f"{v:.1f} {unit}"
-        if abs(v) >= 100:
-            return f"{int(round(v))} {unit}"
-        return f"{int(round(v))} {unit}"
-    if name == "Vitamina D":
-        if abs(v) < 1:
-            return f"{v:.2f} {unit}"
-        if abs(v) < 10:
-            return f"{v:.1f} {unit}"
-        if abs(v) >= 100:
-            return f"{int(round(v))} {unit}"
-        return f"{int(round(v))} {unit}"
-    # Otros micronutrientes
-    if abs(v) >= 100:
-        return f"{int(round(v))} {unit}"
-    if abs(v) < 10:
+    elif name == "Vitamina D":
+        unit = "µg"
+
+    # Reglas de redondeo
+    if abs(v) < 1:
+        return f"{v:.2f} {unit}"
+    elif abs(v) < 10:
         return f"{v:.1f} {unit}"
-    return f"{int(round(v))} {unit}"
-
-# ============================================================
-# SIDEBAR (estructura como tu código)
-# ============================================================
-st.sidebar.header("Configuración")
-
-format_choice = st.sidebar.selectbox(
-    "Formato a exportar",
-    ["Fig. 1 — Vertical estándar", "Fig. 3 — Simplificado", "Fig. 5 — Lineal"],
-    index=0
-)
-
-physical_state = st.sidebar.selectbox("Estado físico", ["Sólido (g)", "Líquido (mL)"])
-portion_unit = "g" if "Sólido" in physical_state else "mL"
-
-st.sidebar.subheader("Porción")
-household_name = st.sidebar.text_input("Medida casera (p. ej. 1 unidad, 1 taza)", value="1 unidad")
-household_mass = as_num(st.sidebar.text_input(f"Equivalencia en {portion_unit} (número)", value="40"))
-servings_per_pack = as_num(st.sidebar.text_input("Número de porciones por envase", value="2"))
-
-st.sidebar.subheader("Micronutrientes a declarar")
-vm_options = [
-    "Vitamina A", "Vitamina D", "Vitamina B1", "Vitamina B12",
-    "Vitamina C", "Vitamina E", "Calcio", "Hierro", "Zinc", "Potasio"
-]
-selected_vm = st.sidebar.multiselect(
-    "Selecciona los que declararás",
-    vm_options,
-    default=["Vitamina A","Calcio","Hierro","Vitamina D","Zinc"]
+    elif abs(v) >= 100:
+        return f"{int(round(v))} {unit}"
+    else:
+        return f"{int(round(v))} {unit}"
+default=["Vitamina A","Calcio","Hierro","Vitamina D","Zinc"]
 )
 
 st.sidebar.subheader("Texto al pie")
