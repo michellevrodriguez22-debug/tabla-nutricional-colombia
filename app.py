@@ -389,18 +389,18 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
     """
     name_w_max = 0
     for t in labels:
-        w,_ = measure_text(draw, t, FONT_LABEL)
-        if w > name_w_max: name_w_max = w
+    w,_ = measure_text(draw, t, FONT_LABEL)
+    if w > name_w_max: name_w_max = w
 
     v100_w_max = 0
     for t in v100_list:
-        w,_ = measure_text(draw, t, FONT_LABEL)
-        if w > v100_w_max: v100_w_max = w
+    w,_ = measure_text(draw, t, FONT_LABEL)
+    if w > v100_w_max: v100_w_max = w
 
     vpp_w_max = 0
     for t in vpp_list:
-        w,_ = measure_text(draw, t, FONT_LABEL)
-        if w > vpp_w_max: vpp_w_max = w
+    w,_ = measure_text(draw, t, FONT_LABEL)
+    if w > vpp_w_max: vpp_w_max = w
 
     # Columnas: [borde izq, después de nombres, después de por100, borde der]
     x0 = BORDER_W + left_margin
@@ -412,10 +412,9 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
     # Alinearemos los números a la derecha de sus columnas
     return [x0 - (BORDER_W-0), x1, x2, x3]
 
-# ============================================================
-# FILAS (usando redondeos)
-# ============================================================
-def common_rows():
+    # ============================================================
+    # FILAS (usando redondeos)
+    # ============================================================def common_rows():
     # Valores con formatos pedidos por nutriente
     rows = [
         ("Grasa total",            f"{fmt_one_decimal(fat_total_100_r)} g",     f"{fmt_one_decimal(fat_total_pp_r)} g",       0, False, False),
