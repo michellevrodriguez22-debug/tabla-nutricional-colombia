@@ -25,6 +25,15 @@ def get_font(size, bold=False):
     except:
         return ImageFont.load_default()
 
+def draw_hline(draw, x1, x2, y, color, width=2):
+    """Dibuja una línea horizontal."""
+    draw.line([(x1, y), (x2, y)], fill=color, width=width)
+
+def draw_vline(draw, x, y1, y2, color, width=2):
+    """Dibuja una línea vertical."""
+    draw.line([(x, y1), (x, y2)], fill=color, width=width)
+
+
 
 # ============================================================
 # CONFIG
