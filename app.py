@@ -587,14 +587,11 @@ def draw_fig1():
             y += ROW_H_MICRO
 
     # LÍNEAS VERTICALES (hasta el final de los micronutrientes)
-    draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1], y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y_header_bottom, y, TEXT_COLOR, GRID_W)
 
 
     # Línea gruesa final
-    # LÍNEAS VERTICALES (hasta la segunda línea gruesa, final del cuerpo)
-    draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
     # pie (opcional)
@@ -658,9 +655,9 @@ def draw_fig3():
 
     # Líneas verticales
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
-    draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
-
+    draw_vline(d, col_x[1], y_header_bottom, y + (2 * GRID_W_THICK), TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y_header_bottom, y + (2 * GRID_W_THICK), TEXT_COLOR, GRID_W)
+    
     # Filas macronutrientes (mismas que vertical)
     for label, v100, vpp, indent, bold, _ in rows_nutri:
         y += 1
