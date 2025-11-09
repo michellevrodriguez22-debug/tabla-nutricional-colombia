@@ -587,8 +587,8 @@ def draw_fig1():
             y += ROW_H_MICRO
 
     # LÍNEAS VERTICALES (hasta el final de los micronutrientes)
-    draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1], y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y_header_bottom, y, TEXT_COLOR, GRID_W)
 
 
     # Línea gruesa final
