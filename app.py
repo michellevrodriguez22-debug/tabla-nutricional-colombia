@@ -166,12 +166,33 @@ def fmt_micro_value(name, unit, v):
         return f"{int(round(v))} {unit}"
     else:
         return f"{int(round(v))} {unit}"
-default=["Vitamina A","Calcio","Hierro","Vitamina D","Zinc"]
+
+# ============================================================
+# ENTRADAS DE CONFIGURACIÓN (SIDEBAR)
+# ============================================================
+st.sidebar.subheader("Configuración general")
+format_choice = st.sidebar.selectbox(
+    "Formato de tabla",
+    ["Fig. 1 - Vertical Estándar", "Fig. 3 - Simplificado", "Fig. 5 - Lineal (empaque pequeño)"]
+)
+
+physical_state = st.sidebar.selectbox("Estado físico", ["Sólido", "Líquido"])
+household_name = st.sidebar.text_input("Nombre de la porción (ej: 1 unidad, 1 taza)", value="1 unidad")
+household_mass = as_num(st.sidebar.text_input("Gramos o mL por porción", value="30"))
+servings_per_pack = as_num(st.sidebar.text_input("Porciones por envase", value="10"))
+
+portion_unit = "mL" if "Líquido" in physical_state else "g"
+
+st.sidebar.subheader("Micronutrientes a incluir")
+vm_options = ["Vitamina A", "Vitamina D", "Vitamina C", "Vitamina E", 
+              "Vitamina B1", "Vitamina B12", "Calcio", "Hierro", "Zinc", "Potasio"]
+selected_vm = st.sidebar.multiselect("Selecciona micronutrientes", vm_options, default=["Vitamina A", "Calcio", "Hierro", "Vitamina D", "Zinc"])
 
 st.sidebar.subheader("Texto al pie")
 footnote_tail = st.sidebar.text_input(
     "Completa: No es fuente significativa de ...",
     value=""
+)  # <--- AQUÍ ESTABA FALTANDO CERRAR ESTE PARÉNTESIS
 
 # ============================================================
 # ENTRADAS (CUERPO PRINCIPAL) — por 100 g/mL
@@ -359,12 +380,12 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     # Asegurar que la línea quede BIEN DESPUÉS del texto más largo CON MARGEN EXTRA
     x1 = x0 + final_name_width + name_to_values_gap  # Línea después de nombres
     
-    # Ancho para columna "Por 100" - usar el máximo entre valores y encabezado + margen
+    # Ancho para columna "Por 100" - usar el máximo entre valores y encabezados + margen
     col100_width = max(v100_w_max, col100_w) + 15
     
     x2 = x1 + col100_width + values_gap  # Línea entre columnas de valores
     
-    # Ancho para columna "Por porción" - usar el máximo entre valores y encabezado + margen REDUCIDO
+    # Ancho para columna "Por porción" - usar el máximo entre valores y encabezados + margen REDUCIDO
     colpp_width = max(vpp_w_max, colpp_w) + 4  # REDUCIDO de 15 a 8
     
     x3 = x2 + colpp_width + right_margin  # Fin de la tabla
