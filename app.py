@@ -392,7 +392,7 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     # Espacios entre columnas
     name_to_values_gap = 35
     values_gap = 20
-    right_margin = 10  # REDUCIDO de 20 a 15
+    right_margin = 15  # REDUCIDO de 20 a 15
 
     # Calcular posiciones basadas en el contenido real
     x0 = BORDER_W + CELL_PAD_X  # Inicio de nombres
