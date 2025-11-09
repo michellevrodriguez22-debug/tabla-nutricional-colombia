@@ -1,9 +1,3 @@
-Lo hiciste mal olvida lo que hiciste y nuevamenta vamos a realizarlo porque al hacer esas modificaciones dañaste algunas partes entonces olvidalo
-
-Este es mi codigo y para la fig 1, 3 y 4 quiero que ajustes mas la linea del marco derecha y la linea que le sigue que separa los valores de por porciones de 100 g para que la tabla quede mas compacta y sin tanto espcaiob en blanco
-
-Entregame mi codigo completo solo modificando lo necesario para este ajuste que te pedi
-
 # app.py
 # ============================================================
 # Generador de Tabla Nutricional (Colombia) -> PNG (solo PNG)
