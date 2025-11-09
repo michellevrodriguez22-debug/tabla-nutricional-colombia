@@ -383,25 +383,30 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     col100_w, _ = measure_text(draw, col100_label, FONT_SMALL_B)
     colpp_w, _ = measure_text(draw, colpp_label, FONT_SMALL_B)
 
-    # Espacios entre columnas - AUMENTADOS para evitar cortes
-    name_to_values_gap = 25  # Aumentado de 20
-    values_gap = 20  # Aumentado de 15
-    right_margin = 20  # Aumentado de 15
+    # Medir específicamente "Azúcares añadidos" para asegurar espacio suficiente
+    azucares_added_width, _ = measure_text(draw, "  Azúcares añadidos", FONT_LABEL)
+    
+    # Usar el MÁXIMO entre todos los nombres y "Azúcares añadidos" específicamente
+    final_name_width = max(name_w_max, azucares_added_width)
+
+    # Espacios entre columnas
+    name_to_values_gap = 30  # Aumentado para dar más espacio después de nombres
+    values_gap = 20
+    right_margin = 20
 
     # Calcular posiciones basadas en el contenido real
     x0 = BORDER_W + CELL_PAD_X  # Inicio de nombres
     
-    # Asegurar que la línea quede DESPUÉS del texto más largo (Azúcares añadidos)
-    azucares_added_width, _ = measure_text(draw, "  Azúcares añadidos", FONT_LABEL)
-    x1 = x0 + max(name_w_max, azucares_added_width) + name_to_values_gap  # Línea después de nombres
+    # Asegurar que la línea quede BIEN DESPUÉS del texto más largo
+    x1 = x0 + final_name_width + name_to_values_gap  # Línea después de nombres
     
     # Ancho para columna "Por 100" - usar el máximo entre valores y encabezado + margen
-    col100_width = max(v100_w_max, col100_w) + 15  # Aumentado de 10
+    col100_width = max(v100_w_max, col100_w) + 15
     
     x2 = x1 + col100_width + values_gap  # Línea entre columnas de valores
     
     # Ancho para columna "Por porción" - usar el máximo entre valores y encabezado + margen
-    colpp_width = max(vpp_w_max, colpp_w) + 15  # Aumentado de 10
+    colpp_width = max(vpp_w_max, colpp_w) + 15
     
     x3 = x2 + colpp_width + right_margin  # Fin de la tabla
 
@@ -495,8 +500,8 @@ def draw_fig1():
     show_micro = len(rows_micro) > 0
 
     # ANCHO INICIAL SUFICIENTE para evitar cortes
-    W = 800  # Aumentado de 700 para evitar cortes
-    header_h = 110  # Suficiente para el título y porciones
+    W = 850  # Aumentado para dar más espacio al encabezado
+    header_h = 130  # AUMENTADO SIGNIFICATIVAMENTE para dar más espacio al texto de porciones
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
 
@@ -527,18 +532,18 @@ def draw_fig1():
     # título
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
-    d.text(((W - tw)//2, BORDER_W + 12), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Aumentado espacio superior
+    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Aumentado espacio superior
 
-    # porciones - texto con espacio suficiente
-    y0 = BORDER_W + 12 + th + 8  # Aumentado espacio
+    # porciones - texto con ESPACIO SUFICIENTE
+    y0 = BORDER_W + 15 + th + 12  # Aumentado espacio significativamente
     d.text((BORDER_W + CELL_PAD_X, y0),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 30),  # Aumentado espacio entre líneas
+    d.text((BORDER_W + CELL_PAD_X, y0 + 35),  # Aumentado espacio entre líneas
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
-    # línea gruesa tras encabezado
+    # línea gruesa tras encabezado - DEBE ESTAR DESPUÉS del texto de porciones
     y_header_bottom = BORDER_W + header_h
     draw_hline(d, BORDER_W, W-BORDER_W, y_header_bottom, TEXT_COLOR, GRID_W_THICK)
 
