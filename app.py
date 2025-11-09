@@ -481,6 +481,35 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
 # ============================================================
 # FIGURA 1 — VERTICAL ESTÁNDAR
 # ============================================================
+
+def fmt_kcal(x):
+    """Formatea las calorías como entero."""
+    try:
+        return f"{int(round(float(x)))}"
+    except:
+        return "0"
+
+def fmt_g(x):
+    """Formatea valores en gramos."""
+    try:
+        x = float(x)
+        if x.is_integer():
+            return f"{int(x)}"
+        return f"{x:.1f}".rstrip('0').rstrip('.')
+    except:
+        return "0"
+
+def fmt_mg(x):
+    """Formatea valores en miligramos."""
+    try:
+        return f"{int(round(float(x)))}"
+    except:
+        return "0"
+
+def fmt_text(x):
+    """Convierte texto a cadena limpia (por seguridad)."""
+    return str(x).strip()
+
 def draw_fig1():
     rows_nutri = common_rows()
     rows_micro = micro_rows()
