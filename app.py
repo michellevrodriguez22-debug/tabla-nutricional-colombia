@@ -356,9 +356,9 @@ def measure_text(draw, text, font):
     bbox = draw.textbbox((0,0), text, font=font)
     return bbox[2]-bbox[0], bbox[3]-bbox[1]
 
-def compute_cols_vertical(draw, labels, v100_list, vpp_list, W, left_margin=20, right_margin=20):
+def compute_cols_vertical(draw, labels, v100_list, vpp_list, W, left_margin=40, right_margin=30):
     """
-    Calcula posiciones de columnas para VERTICAL ESTÁNDAR - MÁS ANCHO
+    Calcula posiciones de columnas para VERTICAL ESTÁNDAR - MÁS ANCHO Y MÁS A LA DERECHA
     """
     name_w_max = 0
     for t in labels:
@@ -375,17 +375,17 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W, left_margin=20, 
         w,_ = measure_text(draw, t, FONT_LABEL)
         if w > vpp_w_max: vpp_w_max = w
 
-    # COLUMNAS MÁS ANCHAS para Vertical Estándar
-    x0 = BORDER_W + left_margin
-    x1 = x0 + 15 + name_w_max + 15  # Más espacio para nombres
-    x2 = x1 + max(v100_w_max, 120) + 15  # Más espacio para valores Por 100
-    x3 = W - BORDER_W - right_margin
+    # COLUMNAS MÁS ANCHAS Y MÁS A LA DERECHA para Vertical Estándar
+    x0 = BORDER_W + left_margin  # Aumentado el margen izquierdo
+    x1 = x0 + 25 + name_w_max + 20  # Más espacio para nombres
+    x2 = x1 + max(v100_w_max, 150) + 20  # MÁS ESPACIO para valores Por 100 (de 120 a 150)
+    x3 = W - BORDER_W - right_margin  # Margen derecho también aumentado
 
     return [x0, x1, x2, x3]
 
-def compute_cols_simplified(draw, labels, v100_list, vpp_list, W, left_margin=20, right_margin=20):
+def compute_cols_simplified(draw, labels, v100_list, vpp_list, W, left_margin=35, right_margin=25):
     """
-    Calcula posiciones de columnas para SIMPLIFICADO - COMPACTO PERO FUNCIONAL
+    Calcula posiciones de columnas para SIMPLIFICADO - MÁS ESPACIO Y MÁS A LA DERECHA
     """
     name_w_max = 0
     for t in labels:
@@ -402,11 +402,11 @@ def compute_cols_simplified(draw, labels, v100_list, vpp_list, W, left_margin=20
         w,_ = measure_text(draw, t, FONT_LABEL)
         if w > vpp_w_max: vpp_w_max = w
 
-    # COLUMNAS COMPACTAS pero con espacio suficiente
-    x0 = BORDER_W + left_margin
-    x1 = x0 + 10 + name_w_max + 10
-    x2 = x1 + max(v100_w_max, 100) + 10
-    x3 = W - BORDER_W - right_margin
+    # COLUMNAS CON MÁS ESPACIO Y MÁS A LA DERECHA
+    x0 = BORDER_W + left_margin  # Aumentado margen izquierdo
+    x1 = x0 + 15 + name_w_max + 15  # Más espacio para nombres
+    x2 = x1 + max(v100_w_max, 120) + 15  # MÁS ESPACIO para Por 100 (de 100 a 120)
+    x3 = W - BORDER_W - right_margin  # Margen derecho aumentado
 
     return [x0, x1, x2, x3]
 
@@ -466,8 +466,8 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     w_c100, _ = measure_text(d, c100, FONT_SMALL_B)
     w_cpp, _ = measure_text(d, cpp, FONT_SMALL_B)
     
-    d.text((col_x[2] - 8 - w_c100, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3] - 8 - w_cpp, y_text_title), cpp, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[2] - 15 - w_c100, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3] - 15 - w_cpp, y_text_title), cpp, fill=TEXT_COLOR, font=FONT_SMALL_B)
     
     # Línea horizontal divisoria entre fila de títulos y valores
     draw_hline(d, col_x[1], W-BORDER_W, y + ROW_H, TEXT_COLOR, GRID_W)
@@ -477,8 +477,8 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
     wpp, _ = measure_text(d, kcal_pp_txt, FONT_LABEL_B)
     
-    d.text((col_x[2] - 8 - w100, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((col_x[3] - 8 - wpp, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[2] - 15 - w100, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3] - 15 - wpp, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
     
     return y + row_h
 
@@ -491,7 +491,7 @@ def draw_fig1():
     show_micro = len(rows_micro) > 0
 
     # ANCHO MÁS AMPLIO para Vertical Estándar
-    W = 850
+    W = 900  # Aumentado de 850 a 900
     header_h = 140
     gap_after_title = 10
     foot_h = 90 if footnote_tail.strip() else 20
@@ -563,8 +563,8 @@ def draw_fig1():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     # micronutrientes
@@ -577,8 +577,8 @@ def draw_fig1():
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
 
     # Línea gruesa final
@@ -604,7 +604,7 @@ def draw_fig3():
     ]
     
     # ANCHO MÁS AMPLIO para Simplificado
-    W = 780
+    W = 820  # Aumentado de 780 a 820
     header_h = 140
     gap_after_title = 10
     foot_h = 90 if footnote_tail.strip() else 20
@@ -665,8 +665,8 @@ def draw_fig3():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-8-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-8-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     # Línea gruesa final
