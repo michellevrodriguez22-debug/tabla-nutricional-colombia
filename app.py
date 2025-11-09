@@ -237,8 +237,9 @@ fiber_pp_r         = round_g(fiber_pp)
 protein_pp_r       = round_g(protein_pp)
 sodium_pp_mg_r     = round_mg(sodium_pp_mg)
 poly_pp_r          = round_g(poly_pp) if include_poly else 0.0
+# PARA GRASAS TRANS POR PORCIÓN: NO APLICAR CRITERIO DE "NO SIGNIFICATIVO"
 _trans_g_pp        = (trans_fat_pp_mg or 0.0)/1000.0
-_trans_g_pp        = nonsig_zero_g("Grasas trans", _trans_g_pp)
+# ELIMINAR ESTA LÍNEA: _trans_g_pp = nonsig_zero_g("Grasas trans", _trans_g_pp)
 trans_fat_pp_mg_r  = round_mg(_trans_g_pp * 1000.0)
 
 # Micronutrientes por porción
