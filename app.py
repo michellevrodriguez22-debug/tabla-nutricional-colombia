@@ -591,30 +591,31 @@ def draw_fig1():
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
     # pie (opcional)
-    # Pie (ajustable en múltiples líneas)
-if footnote_tail.strip():
-    base_text = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
-    max_line_width = W - 2*BORDER_W - 2*CELL_PAD_X
-    words = base_text.split(' ')
-    lines, current_line = [], []
+        # Pie (ajustable en múltiples líneas)
+    if footnote_tail.strip():
+        base_text = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
+        max_line_width = W - 2*BORDER_W - 2*CELL_PAD_X
+        words = base_text.split(' ')
+        lines, current_line = [], []
 
-    for word in words:
-        test_line = ' '.join(current_line + [word])
-        test_width, _ = measure_text(d, test_line, FONT_SMALL)
-        if test_width <= max_line_width:
-            current_line.append(word)
-        else:
-            if current_line:
-                lines.append(' '.join(current_line))
-            current_line = [word]
-    if current_line:
-        lines.append(' '.join(current_line))
+        for word in words:
+            test_line = ' '.join(current_line + [word])
+            test_width, _ = measure_text(d, test_line, FONT_SMALL)
+            if test_width <= max_line_width:
+                current_line.append(word)
+            else:
+                if current_line:
+                    lines.append(' '.join(current_line))
+                current_line = [word]
+        if current_line:
+            lines.append(' '.join(current_line))
 
-    current_y = y + 15
-    for line in lines:
-        d.text((BORDER_W + CELL_PAD_X, current_y), line, fill=TEXT_COLOR, font=FONT_SMALL)
-        current_y += FONT_SMALL.size + 6  # espacio entre líneas
-return img
+        current_y = y + 15
+        for line in lines:
+            d.text((BORDER_W + CELL_PAD_X, current_y), line, fill=TEXT_COLOR, font=FONT_SMALL)
+            current_y += FONT_SMALL.size + 6  # espacio entre líneas
+
+    return img
 
 # ============================================================
 # FIGURA 3 — SIMPLIFICADO (MISMO LAYOUT, SIN MICRONUTRIENTES)
@@ -825,30 +826,31 @@ def draw_fig5():
     y = draw_inline_chunks(d, x, y, max_text_width, line_h, chunks_porcion)
 
     # Pie opcional (si se escribió) - CON DIVISIÓN EN MÚLTIPLES LÍNEAS
-    # Pie (ajustable en múltiples líneas)
-if footnote_tail.strip():
-    base_text = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
-    max_line_width = W - 2*BORDER_W - 2*CELL_PAD_X
-    words = base_text.split(' ')
-    lines, current_line = [], []
+        # Pie (ajustable en múltiples líneas)
+    if footnote_tail.strip():
+        base_text = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
+        max_line_width = W - 2*BORDER_W - 2*CELL_PAD_X
+        words = base_text.split(' ')
+        lines, current_line = [], []
 
-    for word in words:
-        test_line = ' '.join(current_line + [word])
-        test_width, _ = measure_text(d, test_line, FONT_SMALL)
-        if test_width <= max_line_width:
-            current_line.append(word)
-        else:
-            if current_line:
-                lines.append(' '.join(current_line))
-            current_line = [word]
-    if current_line:
-        lines.append(' '.join(current_line))
+        for word in words:
+            test_line = ' '.join(current_line + [word])
+            test_width, _ = measure_text(d, test_line, FONT_SMALL)
+            if test_width <= max_line_width:
+                current_line.append(word)
+            else:
+                if current_line:
+                    lines.append(' '.join(current_line))
+                current_line = [word]
+        if current_line:
+            lines.append(' '.join(current_line))
 
-    current_y = y + 15
-    for line in lines:
-        d.text((BORDER_W + CELL_PAD_X, current_y), line, fill=TEXT_COLOR, font=FONT_SMALL)
-        current_y += FONT_SMALL.size + 6  # espacio entre líneas
-return img
+        current_y = y + 15
+        for line in lines:
+            d.text((BORDER_W + CELL_PAD_X, current_y), line, fill=TEXT_COLOR, font=FONT_SMALL)
+            current_y += FONT_SMALL.size + 6  # espacio entre líneas
+
+    return img
 
 # ============================================================
 # PREVISUALIZACIÓN + EXPORTACIÓN
