@@ -676,6 +676,10 @@ def draw_fig3():
     # Línea gruesa final
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
+    # LÍNEAS VERTICALES (hasta la segunda línea gruesa, final del cuerpo)
+    draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
+
     # Pie SIEMPRE visible
     tail = footnote_tail.strip()
     d.text((BORDER_W + CELL_PAD_X, y + 15), f"No es fuente significativa de {tail}", fill=TEXT_COLOR, font=FONT_SMALL)
