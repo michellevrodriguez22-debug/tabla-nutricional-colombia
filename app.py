@@ -13,6 +13,7 @@
 from io import BytesIO
 from datetime import datetime
 import streamlit as st
+from PIL import Image, ImageDraw, ImageFont
 
 # ============================================================
 # FUNCIÓN PARA CARGAR FUENTES — AÑADIDO POR EL PATCHER
