@@ -14,6 +14,15 @@ from io import BytesIO
 from datetime import datetime
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
+# --- Parche seguro: helpers de líneas por si no están en global ---
+if 'draw_hline' not in globals():
+    def draw_hline(draw, x0, x1, y, color, width):
+        draw.line((x0, y, x1, y), fill=color, width=width)
+
+if 'draw_vline' not in globals():
+    def draw_vline(draw, x, y0, y1, color, width):
+        draw.line((x, y0, x, y1), fill=color, width=width)
+# --- Fin parche ---
 
 # ============================================================
 # FUNCIÓN PARA CARGAR FUENTES — AÑADIDO POR EL PATCHER
