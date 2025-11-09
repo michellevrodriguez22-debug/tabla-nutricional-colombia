@@ -492,8 +492,8 @@ def draw_fig1():
 
     # ANCHO MÁS AMPLIO para Vertical Estándar
     W = 900  # Aumentado de 850 a 900
-    header_h = 140
-    gap_after_title = 10
+    header_h = 120  # Reducido para menos espacio en porciones
+    gap_after_title = 5  # Reducido
     foot_h = 90 if footnote_tail.strip() else 20
 
     body_rows_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
@@ -509,14 +509,14 @@ def draw_fig1():
     # título
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
-    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
+    d.text(((W - tw)//2, BORDER_W + 10), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Ajustado posición Y
 
-    # porciones
-    y0 = BORDER_W + 15 + th + 8
-    d.text((BORDER_W + CELL_PAD_X, y0 + 15),
+    # porciones - texto más compacto
+    y0 = BORDER_W + 10 + th + 5  # Menos espacio
+    d.text((BORDER_W + CELL_PAD_X, y0),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, y0 + 15 + 32),
+    d.text((BORDER_W + CELL_PAD_X, y0 + 28),  # Menos espacio entre líneas
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
@@ -533,7 +533,7 @@ def draw_fig1():
     
     # CORREGIR: Asegurar que la línea quede DESPUÉS de "Azúcares añadidos"
     azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
-    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 30  # +30 para ESPACIO SUFICIENTE
+    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 25  # Reducido de 30 a 25
     
     # Ajustar col_x[1] para que la línea quede claramente después del texto
     if target_x > col_x[1]:
@@ -543,6 +543,9 @@ def draw_fig1():
     kcal_100_txt = f"{fmt_int(kcal_100)}"
     kcal_pp_txt  = f"{fmt_int(kcal_pp)}"
     y = draw_calories_combined_row(d, W, y_header_bottom+1, col_x, kcal_100_txt, kcal_pp_txt)
+
+    # LÍNEA GRUESA después de calorías
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
     # LÍNEA GRUESA INFERIOR - después de micronutrientes
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
@@ -566,6 +569,10 @@ def draw_fig1():
         d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
         d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
+
+    # LÍNEA GRUESA entre macronutrientes y micronutrientes (si hay micronutrientes)
+    if show_micro:
+        draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
     # micronutrientes
     if show_micro:
@@ -605,8 +612,8 @@ def draw_fig3():
     
     # ANCHO MÁS AMPLIO para Simplificado
     W = 820  # Aumentado de 780 a 820
-    header_h = 140
-    gap_after_title = 10
+    header_h = 110  # Reducido para menos espacio
+    gap_after_title = 5  # Reducido
     foot_h = 90 if footnote_tail.strip() else 20
 
     H = (BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK +
@@ -618,11 +625,13 @@ def draw_fig3():
 
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
-    d.text(((W-tw)//2, BORDER_W+15), title, fill=TEXT_COLOR, font=FONT_TITLE)
-    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 15 + th + 15),
+    d.text(((W-tw)//2, BORDER_W+10), title, fill=TEXT_COLOR, font=FONT_TITLE)  # Ajustado Y
+    
+    # Texto de porciones más compacto
+    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 5),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
-    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 15 + th + 15 + 32),
+    d.text((BORDER_W + CELL_PAD_X, BORDER_W + 10 + th + 5 + 28),  # Menos espacio
            f"Número de porciones por envase: {int(round(servings_per_pack))}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
@@ -638,13 +647,16 @@ def draw_fig3():
     
     # CORREGIR: Asegurar espacio después de "Azúcares añadidos"
     azucares_added_width, _ = measure_text(d, "  Azúcares añadidos", FONT_LABEL)
-    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 25
+    target_x = BORDER_W + CELL_PAD_X + 28 + azucares_added_width + 20  # Reducido de 25 a 20
     
     if target_x > col_x[1]:
         col_x[1] = target_x
 
     # Calorías
     y = draw_calories_combined_row(d, W, y_header_bottom+1, col_x, fmt_int(kcal_100), fmt_int(kcal_pp))
+
+    # LÍNEA GRUESA después de calorías
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
     # Línea gruesa inferior
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
