@@ -13,7 +13,6 @@
 from io import BytesIO
 from datetime import datetime
 import streamlit as st
-\1
 
 # ============================================================
 # FUNCIÓN PARA CARGAR FUENTES — AÑADIDO POR EL PATCHER
