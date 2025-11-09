@@ -1,4 +1,3 @@
-
 # app.py
 # ============================================================
 # Generador de Tabla Nutricional (Colombia) -> PNG (solo PNG)
@@ -383,10 +382,10 @@ def measure_text(draw, text, font):
     bbox = draw.textbbox((0,0), text, font=font)
     return bbox[2]-bbox[0], bbox[3]-bbox[1]
 
-def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, right_margin=20):
+def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=15, right_margin=15):
     """
     Calcula posiciones de columnas en base al contenido más largo.
-    Evita columna fantasma; deja "Por porción" pegada al borde interno.
+    MODIFICADO: Espacio más compacto entre columnas
     """
     name_w_max = 0
     for t in labels:
@@ -403,15 +402,16 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
         w,_ = measure_text(draw, t, FONT_LABEL)
         if w > vpp_w_max: vpp_w_max = w
 
-    # Columnas: [borde izq, después de nombres, después de por100, borde der]
+    # MODIFICACIÓN: Espacios reducidos entre columnas
+    # Reducir CELL_PAD_X entre columnas de 22 a 12
+    compact_pad = 12  # En lugar de CELL_PAD_X (22)
+    
     x0 = BORDER_W + left_margin
-    x1 = x0 + CELL_PAD_X + name_w_max + CELL_PAD_X                  # fin columna de nombres
-    x2 = x1 + v100_w_max + CELL_PAD_X + 10                          # fin "por 100"
-    x3 = (W - BORDER_W - right_margin)                              # borde derecho interno
+    x1 = x0 + compact_pad + name_w_max + compact_pad                  # fin columna de nombres
+    x2 = x1 + v100_w_max + compact_pad                               # fin "por 100" - SIN espacio extra
+    x3 = (W - BORDER_W - right_margin)                               # borde derecho interno
 
-    # Si porción necesita más, ajusta x2 para dejar espacio al valor por porción
-    # Alinearemos los números a la derecha de sus columnas
-    return [x0 - (BORDER_W-0), x1, x2, x3]
+    return [x0, x1, x2, x3]
 
 # ============================================================
 # FILAS (usando redondeos)
@@ -469,8 +469,10 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
     wpp,  _ = measure_text(d, kcal_pp_txt,  FONT_LABEL_B)
 
-    d.text((col_x[2] - CELL_PAD_X - w100, y_text_center), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((col_x[3] - CELL_PAD_X - wpp,  y_text_center), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
+    # MODIFICACIÓN: Calorías con padding reducido
+    cal_pad = 8
+    d.text((col_x[2] - cal_pad - w100, y_text_center), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3] - cal_pad - wpp,  y_text_center), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
 
     # línea gruesa abajo
     draw_hline(d, BORDER_W, W-BORDER_W, y + row_h, TEXT_COLOR, GRID_W_THICK)
@@ -528,10 +530,12 @@ def draw_fig1():
     labels_all = [r[0] for r in rows_nutri] + ([r[0] for r in rows_micro] if show_micro else [])
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=20, right_margin=20)
+    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=15)
 
-    d.text((col_x[2] - CELL_PAD_X - w_c100, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3] - CELL_PAD_X - w_cpp,  y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    # MODIFICACIÓN: Encabezados de columna más compactos
+    header_pad = 8
+    d.text((col_x[2] - header_pad - w_c100, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3] - header_pad - w_cpp,  y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
 
     # línea fina bajo encabezados de columnas
     y += colhdr_h
@@ -560,8 +564,10 @@ def draw_fig1():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        # MODIFICACIÓN: Usar padding reducido para valores
+        val_pad = 8
+        d.text((col_x[2]-val_pad-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-val_pad-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     # micronutrientes
@@ -574,8 +580,10 @@ def draw_fig1():
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
+            # MODIFICACIÓN: Usar padding reducido para valores de micronutrientes
+            val_pad = 8
+            d.text((col_x[2]-val_pad-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[3]-val_pad-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
 
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -631,10 +639,12 @@ def draw_fig3():
     labels_all = [r[0] for r in rows]
     v100_all   = [r[1] for r in rows]
     vpp_all    = [r[2] for r in rows]
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=20, right_margin=20)
+    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=15)
 
-    d.text((col_x[2]-CELL_PAD_X-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3]-CELL_PAD_X-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    # MODIFICACIÓN: Encabezados de columna más compactos
+    header_pad = 8
+    d.text((col_x[2]-header_pad-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3]-header_pad-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
 
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
@@ -659,8 +669,10 @@ def draw_fig3():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        # MODIFICACIÓN: Usar padding reducido para valores
+        val_pad = 8
+        d.text((col_x[2]-val_pad-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-val_pad-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -710,10 +722,12 @@ def draw_fig4():
     labels_all = [r[0] for r in rows_nutri] + ([r[0] for r in rows_micro] if show_micro else [])
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=20, right_margin=20)
+    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=15)
 
-    d.text((col_x[2]-CELL_PAD_X-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3]-CELL_PAD_X-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    # MODIFICACIÓN: Encabezados de columna más compactos
+    header_pad = 8
+    d.text((col_x[2]-header_pad-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3]-header_pad-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
 
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
@@ -737,8 +751,10 @@ def draw_fig4():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        # MODIFICACIÓN: Usar padding reducido para valores
+        val_pad = 8
+        d.text((col_x[2]-val_pad-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((col_x[3]-val_pad-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
         y += ROW_H
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -752,8 +768,10 @@ def draw_fig4():
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-CELL_PAD_X-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-CELL_PAD_X-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
+            # MODIFICACIÓN: Usar padding reducido para valores de micronutrientes
+            val_pad = 8
+            d.text((col_x[2]-val_pad-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((col_x[3]-val_pad-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
             y += ROW_H_MICRO
 
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
@@ -771,10 +789,10 @@ def draw_fig5():
     def pair(name, vpp, v100):
         items.append(f"{name}: {vpp} (por 100: {v100})")
 
-    pair("Calorías", f"{fmt_kcal(kcal_pp)} kcal", f"{fmt_kcal(kcal_100)} kcal")
+    pair("Calorías", f"{fmt_int(kcal_pp)} kcal", f"{fmt_int(kcal_100)} kcal")
     pair("Grasa total", f"{round(fat_total_pp,1):.1f} g", f"{round(fat_total_100,1):.1f} g")
     pair("Grasa saturada", f"{round(sat_fat_pp,1):.1f} g", f"{round(sat_fat_100,1):.1f} g")
-    pair("Grasas trans", f"{fmt_mg(trans_fat_pp_mg)} mg", f"{fmt_mg(trans_fat_100_mg)} mg")
+    pair("Grasas trans", f"{trans_fat_pp_mg_r} mg", f"{trans_fat_100_mg_r} mg")
     pair("Carbohidratos totales", ((f"{round(carb_pp,1):.1f}" if abs(carb_pp)<10 else f"{int(round(carb_pp))}") + " g"),
          ((f"{round(carb_100,1):.1f}" if abs(carb_100)<10 else f"{int(round(carb_100))}") + " g"))
     pair("Azúcares totales", f"{round(sug_total_pp,1):.1f} g", f"{round(sug_total_100,1):.1f} g")
