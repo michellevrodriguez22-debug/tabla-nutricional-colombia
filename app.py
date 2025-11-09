@@ -1,3 +1,4 @@
+
 # app.py
 # ============================================================
 # Generador de Tabla Nutricional (Colombia) -> PNG (solo PNG)
@@ -13,27 +14,6 @@ from io import BytesIO
 from datetime import datetime
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
-
-def get_font(size, bold=False):
-    try:
-        font_path = (
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-            if bold
-            else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-        )
-        return ImageFont.truetype(font_path, size)
-    except:
-        return ImageFont.load_default()
-
-def draw_hline(draw, x1, x2, y, color, width=2):
-    """Dibuja una línea horizontal."""
-    draw.line([(x1, y), (x2, y)], fill=color, width=width)
-
-def draw_vline(draw, x, y1, y2, color, width=2):
-    """Dibuja una línea vertical."""
-    draw.line([(x, y1), (x, y2)], fill=color, width=width)
-
-
 
 # ============================================================
 # CONFIG
@@ -407,8 +387,8 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
     # Columnas: [borde izq, después de nombres, después de por100, borde der]
     x0 = BORDER_W + left_margin
     x1 = x0 + CELL_PAD_X + name_w_max + CELL_PAD_X                  # fin columna de nombres
-    x2 = x1 + v100_w_max + CELL_PAD_X + 10                          # fin "por 100"
-    x3 = (W - BORDER_W - right_margin)                              # borde derecho interno
+    x2 = x1 + v100_w_max + CELL_PAD_X + 5                          # fin "por 100"
+    x3 = x2 + vpp_w_max + CELL_PAD_X + 5                              # borde derecho interno
 
     # Si porción necesita más, ajusta x2 para dejar espacio al valor por porción
     # Alinearemos los números a la derecha de sus columnas
@@ -481,35 +461,6 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
 # ============================================================
 # FIGURA 1 — VERTICAL ESTÁNDAR
 # ============================================================
-
-def fmt_kcal(x):
-    """Formatea las calorías como entero."""
-    try:
-        return f"{int(round(float(x)))}"
-    except:
-        return "0"
-
-def fmt_g(x):
-    """Formatea valores en gramos."""
-    try:
-        x = float(x)
-        if x.is_integer():
-            return f"{int(x)}"
-        return f"{x:.1f}".rstrip('0').rstrip('.')
-    except:
-        return "0"
-
-def fmt_mg(x):
-    """Formatea valores en miligramos."""
-    try:
-        return f"{int(round(float(x)))}"
-    except:
-        return "0"
-
-def fmt_text(x):
-    """Convierte texto a cadena limpia (por seguridad)."""
-    return str(x).strip()
-
 def draw_fig1():
     rows_nutri = common_rows()
     rows_micro = micro_rows()
