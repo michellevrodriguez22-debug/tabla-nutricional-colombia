@@ -401,10 +401,10 @@ def compute_cols_compact(draw, labels, v100_list, vpp_list, W, left_margin=20, r
         w,_ = measure_text(draw, t, FONT_LABEL)
         if w > vpp_w_max: vpp_w_max = w
 
-    # AJUSTE: Columnas MÁS COMPACTAS - reducido significativamente
+    # AJUSTE: Columnas MÁS COMPACTAS - optimizado
     x0 = BORDER_W + left_margin
-    x1 = x0 + 10 + name_w_max + 10  # Reducido de 15+...+15 a 10+...+10
-    x2 = x1 + v100_w_max + 8        # Reducido de 10 a 8
+    x1 = x0 + 10 + name_w_max + 10
+    x2 = x1 + max(v100_w_max, 120) + 8  # Aseguramos espacio mínimo para valores
     x3 = W - BORDER_W - right_margin
 
     return [x0, x1, x2, x3]
@@ -448,30 +448,52 @@ def micro_rows():
     return rows
 
 # ============================================================
-# BLOQUE CALORÍAS (celda combinada) — helper reutilizable
+# BLOQUE CALORÍAS NUEVO - COMO SOLICITADO
 # ============================================================
 def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
-    # línea gruesa arriba
+    """
+    Nuevo diseño de calorías:
+    _____________________________
+    |Calorías      |Por 100 g| Por porción |
+    |              |_________|_____________|
+    |              |(Valor)  | (Valor)     |
+    |______________|_________|_____________|
+    """
+    row_h = ROW_H * 2  # Doble altura para las 2 filas
+    
+    # Línea gruesa arriba
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
-    # altura de la fila combinada
-    row_h = ROW_H
-    y_text_center = y + (row_h // 2) - 14
-
-    # título a la izquierda
-    d.text((BORDER_W + CELL_PAD_X, y_text_center), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
-
-    # valores centrados en sus columnas
+    
+    # Línea vertical entre nombre y valores
+    draw_vline(d, col_x[1], y, y + row_h, TEXT_COLOR, GRID_W)
+    
+    # Título "Calorías" centrado verticalmente en la primera fila
+    y_text_title = y + (ROW_H // 2) - 14
+    d.text((BORDER_W + CELL_PAD_X, y_text_title), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
+    
+    # Encabezados de columnas en la primera fila
+    c100, cpp = column_labels()
+    w_c100, _ = measure_text(d, c100, FONT_SMALL_B)
+    w_cpp, _ = measure_text(d, cpp, FONT_SMALL_B)
+    
+    d.text((col_x[2] - 8 - w_c100, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((col_x[3] - 8 - w_cpp, y_text_title), cpp, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    
+    # Línea horizontal divisoria entre fila de títulos y valores
+    draw_hline(d, col_x[1], W-BORDER_W, y + ROW_H, TEXT_COLOR, GRID_W)
+    
+    # Valores en la segunda fila
+    y_text_values = y + ROW_H + (ROW_H // 2) - 14
     w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
-    wpp,  _ = measure_text(d, kcal_pp_txt,  FONT_LABEL_B)
-
-    d.text((col_x[2] - 8 - w100, y_text_center), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((col_x[3] - 8 - wpp,  y_text_center), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
-
-    # línea gruesa abajo
+    wpp, _ = measure_text(d, kcal_pp_txt, FONT_LABEL_B)
+    
+    d.text((col_x[2] - 8 - w100, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((col_x[3] - 8 - wpp, y_text_values), kcal_pp_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    
+    # Línea gruesa abajo
     draw_hline(d, BORDER_W, W-BORDER_W, y + row_h, TEXT_COLOR, GRID_W_THICK)
-
-    return y + row_h  # retorna y al final del bloque
+    
+    return y + row_h
 
 # ============================================================
 # FIGURA 1 — VERTICAL ESTÁNDAR
@@ -481,8 +503,8 @@ def draw_fig1():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    # ANCHO REDUCIDO SIGNIFICATIVAMENTE - de 950 a 800
-    W = 800
+    # ANCHO OPTIMIZADO - balance entre compacto y legible
+    W = 850
     header_h = 140
     gap_after_title = 10
     colhdr_h = 70
@@ -490,7 +512,7 @@ def draw_fig1():
 
     body_rows_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
     H = (BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK +
-         colhdr_h + GRID_W + ROW_H + GRID_W_THICK + body_rows_h + GRID_W_THICK + foot_h)
+         colhdr_h + GRID_W + (ROW_H * 2) + GRID_W_THICK + body_rows_h + GRID_W_THICK + foot_h)  # ROW_H * 2 para calorías
 
     img = Image.new("RGB", (W, H), BG_WHITE)
     d = ImageDraw.Draw(img)
@@ -516,21 +538,13 @@ def draw_fig1():
     y = BORDER_W + header_h + gap_after_title
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
-    # etiquetas de columnas
-    c100, cpp = column_labels()
-    w_c100, _ = measure_text(d, c100, FONT_SMALL_B)
-    w_cpp,  _ = measure_text(d, cpp,  FONT_SMALL_B)
-
     # Calcular columnas compactas usando contenido de filas
     labels_all = [r[0] for r in rows_nutri] + ([r[0] for r in rows_micro] if show_micro else [])
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=10)
+    col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
 
-    d.text((col_x[2] - 8 - w_c100, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3] - 8 - w_cpp,  y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
-
-    # línea fina bajo encabezados de columnas
+    # Línea fina bajo encabezados de columnas (se elimina ya que ahora están en calorías)
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
 
@@ -540,30 +554,22 @@ def draw_fig1():
     draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)  # entre nombre y valores
     draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
 
-    # ------- BLOQUE CALORÍAS (celda combinada, sin línea media que corte texto) -------
+    # ------- BLOQUE CALORÍAS NUEVO -------
     kcal_100_txt = f"{fmt_int(kcal_100)}"
     kcal_pp_txt  = f"{fmt_int(kcal_pp)}"
     y = draw_calories_combined_row(d, W, y+1, col_x, kcal_100_txt, kcal_pp_txt)
 
     # filas macronutrientes
-    for label, v100, vpp, indent, bold, _ in rows_nutri:
+    for label, v100, vpp, indent, bold, is_micro in rows_nutri:
+        if is_micro:
+            continue  # Los micronutrientes se manejan después
+            
         y += 1
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
         font_lbl = FONT_LABEL_B if bold else FONT_LABEL
         font_val = FONT_LABEL_B if bold else FONT_LABEL
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text  = y + (ROW_H//2) - 14
-        
-        # ESPECIAL: Para "Azúcares añadidos", alinear la línea vertical con el final del texto
-        if label == "  Azúcares añadidos":
-            # Medir el ancho del texto "  Azúcares añadidos"
-            label_width, _ = measure_text(d, label, font_lbl)
-            # Ajustar la posición de la línea vertical para que coincida con el final del texto
-            col_x[1] = x_label + label_width + 15  # +15 para un pequeño espacio
-            
-            # Redibujar las líneas verticales con la nueva posición
-            draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)
-            draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
         
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
@@ -606,15 +612,15 @@ def draw_fig3():
         ("Proteína",               f"{fmt_one_decimal(protein_100_r)} g",    f"{fmt_one_decimal(protein_pp_r)} g",     0, False),
         ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",         f"{fmt_int(sodium_pp_mg_r)} mg",          0, True),
     ]
-    # ANCHO REDUCIDO SIGNIFICATIVAMENTE - de 850 a 700
-    W = 700
+    
+    W = 750
     header_h = 140
     gap_after_title = 10
     colhdr_h = 70
     foot_h = 110 if footnote_tail.strip() else 30
 
     H = (BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK +
-         colhdr_h + GRID_W + ROW_H + GRID_W_THICK + len(rows)*ROW_H + GRID_W_THICK + foot_h)
+         colhdr_h + GRID_W + (ROW_H * 2) + GRID_W_THICK + len(rows)*ROW_H + GRID_W_THICK + foot_h)
 
     img = Image.new("RGB", (W, H), BG_WHITE)
     d = ImageDraw.Draw(img)
@@ -633,17 +639,10 @@ def draw_fig3():
     y = BORDER_W + header_h + gap_after_title
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
-    c100, cpp = column_labels()
-    w1,_ = measure_text(d, c100, FONT_SMALL_B)
-    w2,_ = measure_text(d, cpp,  FONT_SMALL_B)
-
     labels_all = [r[0] for r in rows]
     v100_all   = [r[1] for r in rows]
     vpp_all    = [r[2] for r in rows]
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=10)
-
-    d.text((col_x[2]-8-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3]-8-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
 
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
@@ -653,7 +652,7 @@ def draw_fig3():
     draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)
     draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
 
-    # Calorías (celda combinada)
+    # Calorías (nuevo diseño)
     y = draw_calories_combined_row(d, W, y+1, col_x, fmt_int(kcal_100), fmt_int(kcal_pp))
 
     # Filas
@@ -664,17 +663,6 @@ def draw_fig3():
         font_val = FONT_LABEL_B if bold else FONT_LABEL
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text = y + (ROW_H//2) - 14
-        
-        # ESPECIAL: Para "Azúcares añadidos", alinear la línea vertical con el final del texto
-        if label == "  Azúcares añadidos":
-            # Medir el ancho del texto "  Azúcares añadidos"
-            label_width, _ = measure_text(d, label, font_lbl)
-            # Ajustar la posición de la línea vertical para que coincida con el final del texto
-            col_x[1] = x_label + label_width + 15  # +15 para un pequeño espacio
-            
-            # Redibujar las líneas verticales con la nueva posición
-            draw_vline(d, col_x[1], data_top, data_bottom, TEXT_COLOR, GRID_W)
-            draw_vline(d, col_x[2], data_top, data_bottom, TEXT_COLOR, GRID_W)
         
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
@@ -696,7 +684,6 @@ def draw_fig4():
     rows_micro = micro_rows()
     show_micro = len(rows_micro) > 0
 
-    # ANCHO REDUCIDO SIGNIFICATIVAMENTE - de 1050 a 900
     W = 900
     header_h = 140
     gap_after_title = 10
@@ -705,7 +692,7 @@ def draw_fig4():
 
     body_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
     H = (BORDER_W*2 + header_h + gap_after_title + GRID_W_THICK +
-         colhdr_h + GRID_W + ROW_H + GRID_W_THICK + body_h + GRID_W_THICK + foot_h)
+         colhdr_h + GRID_W + (ROW_H * 2) + GRID_W_THICK + body_h + GRID_W_THICK + foot_h)
 
     img = Image.new("RGB", (W,H), BG_WHITE)
     d = ImageDraw.Draw(img)
@@ -724,17 +711,10 @@ def draw_fig4():
     y = BORDER_W + header_h + gap_after_title
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
-    c100, cpp = column_labels()
-    w1,_ = measure_text(d, c100, FONT_SMALL_B)
-    w2,_ = measure_text(d, cpp,  FONT_SMALL_B)
-
     labels_all = [r[0] for r in rows_nutri] + ([r[0] for r in rows_micro] if show_micro else [])
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
-    col_x = compute_cols_compact(d, labels_all, v100_all+[c100], vpp_all+[cpp], W, left_margin=15, right_margin=10)
-
-    d.text((col_x[2]-8-w1, y + CELL_PAD_Y), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3]-8-w2, y + CELL_PAD_Y), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    col_x = compute_cols_compact(d, labels_all, v100_all, vpp_all, W, left_margin=15, right_margin=10)
 
     y += colhdr_h
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
@@ -743,7 +723,7 @@ def draw_fig4():
     draw_vline(d, col_x[1], y, data_bottom_limit, TEXT_COLOR, GRID_W)
     draw_vline(d, col_x[2], y, data_bottom_limit, TEXT_COLOR, GRID_W)
 
-    # Calorías (celda combinada)
+    # Calorías (nuevo diseño)
     y = draw_calories_combined_row(d, W, y+1, col_x, fmt_int(kcal_100), fmt_int(kcal_pp))
 
     # Resto filas
@@ -754,17 +734,6 @@ def draw_fig4():
         font_val = FONT_LABEL_B if bold else FONT_LABEL
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text = y + (ROW_H//2) - 14
-        
-        # ESPECIAL: Para "Azúcares añadidos", alinear la línea vertical con el final del texto
-        if label == "  Azúcares añadidos":
-            # Medir el ancho del texto "  Azúcares añadidos"
-            label_width, _ = measure_text(d, label, font_lbl)
-            # Ajustar la posición de la línea vertical para que coincida con el final del texto
-            col_x[1] = x_label + label_width + 15  # +15 para un pequeño espacio
-            
-            # Redibujar las líneas verticales con la nueva posición
-            draw_vline(d, col_x[1], y, data_bottom_limit, TEXT_COLOR, GRID_W)
-            draw_vline(d, col_x[2], y, data_bottom_limit, TEXT_COLOR, GRID_W)
         
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
@@ -795,7 +764,7 @@ def draw_fig4():
     return img
 
 # ============================================================
-# FIGURA 5 — LINEAL
+# FIGURA 5 — LINEAL (sin cambios)
 # ============================================================
 def draw_fig5():
     items = []
