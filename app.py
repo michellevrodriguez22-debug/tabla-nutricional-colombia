@@ -222,6 +222,8 @@ with c2:
     carb_100       = as_num(st.text_input("Carbohidratos totales (g/100)", value="31"))
     sug_total_100  = as_num(st.text_input("Azúcares totales (g/100)", value="5"))
     sug_added_100  = as_num(st.text_input("Azúcares añadidos (g/100)", value="2"))
+    include_poly = st.checkbox("Incluir polialcoholes", value=False, help="Agrega polialcoholes al rotulado")
+    poly_100 = as_num(st.text_input("Polialcoholes (g/100)", value="0")) if include_poly else 0.0
 with c3:
     fiber_100      = as_num(st.text_input("Fibra dietaria (g/100)", value="0.8"))
     protein_100    = as_num(st.text_input("Proteína (g/100)", value="5"))
@@ -257,6 +259,7 @@ sug_total_pp    = portion_from_per100(sug_total_100, portion_size)
 sug_added_pp    = portion_from_per100(sug_added_100, portion_size)
 fiber_pp        = portion_from_per100(fiber_100, portion_size)
 protein_pp      = portion_from_per100(protein_100, portion_size)
+poly_pp         = portion_from_per100(poly_100, portion_size) if "poly_100" in globals() or "poly_100" in locals() else 0.0
 sodium_pp_mg    = portion_from_per100(sodium_100_mg, portion_size)
 
 # Energía (antes de redondear)
@@ -282,6 +285,7 @@ sug_total_100_r     = round_g(nonsig_zero_g("Azúcares totales",  sug_total_100)
 sug_added_100_r     = round_g(nonsig_zero_g("Azúcares añadidos", sug_added_100))
 fiber_100_r         = round_g(nonsig_zero_g("Fibra dietaria",    fiber_100))
 protein_100_r       = round_g(nonsig_zero_g("Proteína",          protein_100))
+poly_100_r          = round_g(poly_100) if "poly_100" in globals() or "poly_100" in locals() else 0.0
 sodium_100_mg_r     = round_mg(nonsig_zero_mg("Sodio",           sodium_100_mg))
 # trans por 100: entra en mg, convertimos a g para evaluar no significativo y regresamos a mg
 _trans_g_100        = (trans_fat_100_mg or 0.0)/1000.0
@@ -296,6 +300,7 @@ sug_total_pp_r     = round_g(nonsig_zero_g("Azúcares totales",  sug_total_pp))
 sug_added_pp_r     = round_g(nonsig_zero_g("Azúcares añadidos", sug_added_pp))
 fiber_pp_r         = round_g(nonsig_zero_g("Fibra dietaria",    fiber_pp))
 protein_pp_r       = round_g(nonsig_zero_g("Proteína",          protein_pp))
+poly_pp_r          = round_g(poly_pp) if "poly_pp" in globals() or "poly_pp" in locals() else 0.0
 sodium_pp_mg_r     = round_mg(nonsig_zero_mg("Sodio",           sodium_pp_mg))
 # trans por porción (mg)
 _trans_g_pp        = (trans_fat_pp_mg or 0.0)/1000.0
@@ -427,7 +432,7 @@ def common_rows():
 
 def micro_rows():
     # Orden solicitado: Hierro antes que Calcio
-    order = ["Hierro","Calcio","Zinc","Potasio","Vitamina A","Vitamina D","Vitamina C","Vitamina E","Vitamina B1","Vitamina B12"]
+    order = ["Vitamina A","Vitamina D","Vitamina C","Vitamina E","Vitamina B1","Vitamina B12","Calcio","Hierro","Zinc","Potasio"]
     # Filtrar solo los seleccionados, respetando el orden definido
     selected = [(n,u) for (n,u) in vm_values_rounded.keys()]
     ordered = []
@@ -674,79 +679,132 @@ def draw_fig3():
     d.text((BORDER_W + CELL_PAD_X, y + 15), f"No es fuente significativa de {tail}", fill=TEXT_COLOR, font=FONT_SMALL)
     return img
 
+
+# ----------------- Helpers for rich inline text (bold/regular) -----------------
+def draw_inline_chunks(d, x, y, max_width, line_height, chunks):
+    """
+    chunks: list of (text, is_bold, font_regular, font_bold)
+    Returns: final y after drawing
+    """
+    cx, cy = x, y
+    for text, is_bold in chunks:
+        font = FONT_LABEL_B if is_bold else FONT_LABEL
+        # Split by spaces to wrap
+        for token in text.split(' '):
+            token_out = (token + ' ')
+            tw, th = measure_text(d, token_out, font)
+            if cx + tw > x + max_width:
+                # new line
+                cx = x
+                cy += line_height
+            d.text((cx, cy), token_out, fill=TEXT_COLOR, font=font)
+            cx += tw
+    return cy + line_height
+
 # ============================================================
 # FIGURA 5 — LINEAL
 # ============================================================
 def draw_fig5():
-    # Secuencia lineal; prioriza por porción
-    parts = []
-    parts.append(f"Calorías: {fmt_int(kcal_pp)} kcal")
-    parts.append(f"Grasa total: {fmt_one_decimal(fat_total_pp_r)} g")
-    parts.append(f"Saturada: {fmt_one_decimal(sat_fat_pp_r)} g")
-    parts.append(f"Trans: {fmt_int(trans_fat_pp_mg_r)} mg")
-    parts.append(f"Carbohidratos: {fmt_carbs_rule(carb_pp_r)} g")
-    parts.append(f"Azúcares: {fmt_one_decimal(sug_total_pp_r)} g (añadidos {fmt_one_decimal(sug_added_pp_r)} g)")
-    parts.append(f"Proteína: {fmt_one_decimal(protein_pp_r)} g")
-    parts.append(f"Sodio: {fmt_int(sodium_pp_mg_r)} mg")
-
-    line = "  |  ".join(parts)
-
-    # Medidas base
-    W = 1200
-    H = 260
+    # Tabular para empaque: sin "formato lineal" en el título
+    # Construimos dos bloques: (100 g/mL) y (por porción)
+    W = 1400
+    H = 420
     img = Image.new("RGB", (W, H), BG_WHITE)
     d = ImageDraw.Draw(img)
-
-    title = "Información Nutricional — Formato Lineal"
-    tw, th = d.textbbox((0,0), title, font=FONT_TITLE)[2:4]
     d.rectangle([0,0,W-1,H-1], outline=TEXT_COLOR, width=BORDER_W)
-    d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
 
-    y0 = BORDER_W + 15 + th + 12
-    info_line = f"Porción: {household_name} ({int(round(portion_size))} {portion_unit})  •  Porciones por envase: {int(round(servings_per_pack))}"
-    d.text((BORDER_W + CELL_PAD_X, y0), info_line, fill=TEXT_COLOR, font=FONT_SMALL)
+    # Encabezado general (negrilla): "Información nutricional (...)"
+    basis = "(100 mL)" if is_liquid else "(100 g)"
+    header1 = f"Información nutricional {basis}:"
+    tw, th = measure_text(d, header1, FONT_TITLE)
+    d.text(((W - tw)//2, BORDER_W + 10), header1, fill=TEXT_COLOR, font=FONT_TITLE)
 
-    y = y0 + 44
-    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
+    y0 = BORDER_W + 10 + th + 16
+    draw_hline(d, BORDER_W, W-BORDER_W, y0, TEXT_COLOR, GRID_W_THICK)
+    y = y0 + 16
+
+    # ----- Bloque 1: por 100 -----
+    max_text_width = W - 2*BORDER_W - 2*CELL_PAD_X
+    x = BORDER_W + CELL_PAD_X
+    line_h = 40
+
+    # Lista completa por 100 (con etiquetas en negrilla donde aplica)
+    chunks_100 = []
+    # Calorías en negrilla
+    chunks_100 += [(f"Calorías: {fmt_int(kcal_100)},", True)]
+    chunks_100 += [(f"Grasa total: {fmt_one_decimal(fat_total_100_r)} g,", False)]
+    chunks_100 += [(f"Sodio: {fmt_int(sodium_100_mg_r)} mg,", True)]
+    chunks_100 += [(f"Carbohidratos totales: {fmt_carbs_rule(carb_100_r)} g,", False)]
+    chunks_100 += [(f"Azúcares añadidos: {fmt_one_decimal(sug_added_100_r)} g,", True)]
+    chunks_100 += [(f"Proteína: {fmt_one_decimal(protein_100_r)} g,", False)]
+    # Micronutrientes (todos) en el orden definido
+    # Usamos vm_options para asegurar presencia, con valores 0 si no fueron ingresados.
+    def get_vm100(name):
+        # Buscar unidad esperada
+        unit = "µg ER" if name=="Vitamina A" else ("µg" if name in ("Vitamina D","Vitamina B12") else "mg")
+        v = 0.0
+        # si el usuario ingresó, está en vm_values_rounded
+        for (n,u), val in vm_values_rounded.items():
+            if n==name:
+                v = val
+                unit = u
+        return fmt_micro_value(name, unit, v)
+    for vm in ["Vitamina A","Vitamina D","Vitamina C","Vitamina E","Vitamina B1","Vitamina B12","Calcio","Hierro","Zinc","Potasio"]:
+        chunks_100 += [(f"{vm}: {get_vm100(vm)},", False)]
+    # Polialcoholes si aplica
+    if ("include_poly" in globals() or "include_poly" in locals()) and include_poly:
+        chunks_100 += [(f"Polialcoholes: {fmt_one_decimal(poly_100_r)} g,", False)]
+
+    # Dibujado inline con negrillas selectivas
+    chunks_100_draw = []
+    for t,b in chunks_100:
+        chunks_100_draw.append((t, b))
+    y = draw_inline_chunks(d, x, y, max_text_width, line_h, chunks_100_draw)
+
+    # ----- Bloque 2: por porción -----
+    header2 = "Información nutricional (por porción):"
+    tw2, th2 = measure_text(d, header2, FONT_TITLE)
+    d.text(((W - tw2)//2, y + 14), header2, fill=TEXT_COLOR, font=FONT_TITLE)
+    y = y + 14 + th2 + 10
+
+    # Línea previa
+    draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
     y += 16
 
-    # Ajuste automático de ancho
-    max_width = W - 2*BORDER_W - 2*CELL_PAD_X
-    words = line.split(" ")
-    lines = []
-    current = ""
-    for w in words:
-        test = (current + " " + w).strip()
-        tw_test = d.textbbox((0,0), test, font=FONT_LABEL)[2]
-        if tw_test <= max_width:
-            current = test
-        else:
-            lines.append(current)
-            current = w
-    if current:
-        lines.append(current)
+    # "Tamaño de porción:" y "Número de porciones..." en negrilla, resto normal
+    chunks_porcion = [
+        ("Tamaño de porción:", True),
+        (f" {household_name} ({int(round(portion_size))} {portion_unit})   ", False),
+        ("Número de porciones por envase:", True),
+        (f" {int(round(servings_per_pack))}   ", False),
+        # Luego nutrientes por porción:
+        (f"Calorías: {fmt_int(kcal_pp)},", True),
+        (f" Grasa total: {fmt_one_decimal(fat_total_pp_r)} g,", False),
+        (f" Sodio: {fmt_int(sodium_pp_mg_r)} mg,", True),
+        (f" Carbohidratos totales: {fmt_carbs_rule(carb_pp_r)} g,", False),
+        (f" Azúcares añadidos: {fmt_one_decimal(sug_added_pp_r)} g,", True),
+        (f" Proteína: {fmt_one_decimal(protein_pp_r)} g,", False),
+    ]
+    # Micronutrientes por porción (todos)
+    def get_vmpp(name):
+        unit = "µg ER" if name=="Vitamina A" else ("µg" if name in ("Vitamina D","Vitamina B12") else "mg")
+        v = 0.0
+        for (n,u), val in vm_pp.items():
+            if n==name:
+                v = val
+                unit = u
+        return fmt_micro_value(name, unit, v)
+    for vm in ["Vitamina A","Vitamina D","Vitamina C","Vitamina E","Vitamina B1","Vitamina B12","Calcio","Hierro","Zinc","Potasio"]:
+        chunks_porcion.append((f" {vm}: {get_vmpp(vm)},", False))
+    if ("include_poly" in globals() or "include_poly" in locals()) and include_poly:
+        chunks_porcion.append((f" Polialcoholes: {fmt_one_decimal(poly_pp_r)} g,", False))
 
-    needed_width = max(d.textbbox((0,0), ln, font=FONT_LABEL)[2] for ln in lines) + 2*BORDER_W + 2*CELL_PAD_X
-    if needed_width > W:
-        W = needed_width
-        H = 260 + max(0, (len(lines)-1))*40
-        img = Image.new("RGB", (W, H), BG_WHITE)
-        d = ImageDraw.Draw(img)
-        d.rectangle([0,0,W-1,H-1], outline=TEXT_COLOR, width=BORDER_W)
-        d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
-        d.text((BORDER_W + CELL_PAD_X, y0), info_line, fill=TEXT_COLOR, font=FONT_SMALL)
-        y = y0 + 44
-        draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-        y += 16
+    y = draw_inline_chunks(d, x, y, max_text_width, line_h, chunks_porcion)
 
-    for ln in lines:
-        d.text((BORDER_W + CELL_PAD_X, y), ln, fill=TEXT_COLOR, font=FONT_LABEL)
-        y += 40
-
+    # Pie opcional (si se escribió)
     if footnote_tail.strip():
         draw_hline(d, BORDER_W, W-BORDER_W, y+6, TEXT_COLOR, GRID_W_THICK)
         d.text((BORDER_W + CELL_PAD_X, y + 18), f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}", fill=TEXT_COLOR, font=FONT_SMALL)
-
     return img
 
 # ============================================================
