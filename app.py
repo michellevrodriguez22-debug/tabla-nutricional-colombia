@@ -439,22 +439,23 @@ def common_rows():
     return rows
 
 def micro_rows():
-    # Orden solicitado: Hierro antes que Calcio
-    order = ["Vitamina A","Vitamina D","Vitamina C","Vitamina E","Vitamina B1","Vitamina B12","Calcio","Hierro","Zinc","Potasio"]
+    # Orden oficial según Resolución 810 de 2021: Vitamina A, Vitamina D, Hierro, Calcio, Zinc
+    order = ["Vitamina A", "Vitamina D", "Hierro", "Calcio", "Zinc"]
+
     # Filtrar solo los seleccionados, respetando el orden definido
-    selected = [(n,u) for (n,u) in vm_values_rounded.keys()]
+    selected = [(n, u) for (n, u) in vm_values_rounded.keys()]
     ordered = []
     for name in order:
-        for (n,u) in selected:
+        for (n, u) in selected:
             if n == name:
-                ordered.append((n,u))
+                ordered.append((n, u))
 
     rows = []
     for (name, unit) in ordered:
         v100 = vm_values_rounded[(name, unit)]
-        vpp  = vm_pp[(name, unit)]
+        vpp = vm_pp[(name, unit)]
         v100_txt = fmt_micro_value(name, unit, v100)
-        vpp_txt  = fmt_micro_value(name, unit, vpp)
+        vpp_txt = fmt_micro_value(name, unit, vpp)
         rows.append((name, v100_txt, vpp_txt, 0, False, True))
     return rows
 
