@@ -552,8 +552,8 @@ def draw_fig1():
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
 
     # DIBUJAR LÍNEAS VERTICALES DESDE ARRIBA HASTA ABAJO
-    draw_vline(d, col_x[1], y_header_bottom, y, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
 
     # filas macronutrientes
     for label, v100, vpp, indent, bold, _ in rows_nutri:
@@ -653,8 +653,8 @@ def draw_fig3():
 
     # Líneas verticales
     data_bottom = H - BORDER_W - foot_h - GRID_W_THICK
-    draw_vline(d, col_x[1], y_header_bottom, y, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2], y_header_bottom, y + GRID_W_THICK, TEXT_COLOR, GRID_W)
 
     # Filas macronutrientes (mismas que vertical)
     for label, v100, vpp, indent, bold, _ in rows_nutri:
