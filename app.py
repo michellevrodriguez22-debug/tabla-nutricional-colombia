@@ -96,6 +96,20 @@ def fmt_one_decimal(v):
         return f"{int(v)}"
     return f"{v:.1f}"
 
+def fmt_carbs_rule(v):
+    """
+    Regla visual para carbohidratos en formato lineal:
+    - Enteros → sin decimales
+    - Decimales → 1 decimal
+    (no altera el redondeo normativo previo)
+    """
+    try:
+        v = float(v)
+    except Exception:
+        return "0"
+    if v.is_integer():
+        return f"{int(v)}"
+    return f"{v:.1f}"
 
 def fmt_micro_value(name, unit, v):
     """
