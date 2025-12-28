@@ -415,10 +415,10 @@ def micro_rows():
 def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     row_h = ROW_H * 2
     y_text_title = y + (ROW_H // 2) - 14
-    d.text((BORDER_W + CELL_PAD_X, y_text_title), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((BORDER_W + CELL_PAD_X, y_text_title), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_EMPH_B)
 
     c100, cpp = column_labels()
-    w_c100, _ = measure_text(d, c100, FONT_SMALL_B)
+    w_c100, _ = measure_text(d, c100, FONT_SMALL_)
     w_cpp, _ = measure_text(d, cpp, FONT_SMALL_B)
     x100_center = (col_x[1] + col_x[2]) // 2
     xpp_center  = (col_x[2] + col_x[3]) // 2
@@ -430,15 +430,20 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     draw_hline(d, col_x[1], W-BORDER_W, y + ROW_H, TEXT_COLOR, GRID_W)
     
     y_text_values = y + ROW_H + (ROW_H // 2) - 14
-    w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
-    wpp, _  = measure_text(d, kcal_pp_txt,  FONT_LABEL_B)
+    w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_EMPH_B)
+    wpp, _  = measure_text(d, kcal_pp_txt,  FONT_LABEL_EMPH_B)
     
     x100_center = (col_x[1] + col_x[2]) // 2
     xpp_center  = (col_x[2] + col_x[3]) // 2
     
-    d.text((x100_center - w100//2, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((xpp_center  - wpp//2,  y_text_values), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
-
+    d.text((x100_center - w100//2, y_text_values),
+       kcal_100_txt,
+       fill=TEXT_COLOR,
+       font=FONT_LABEL_EMPH_B)
+    d.text((xpp_center - wpp//2, y_text_values),
+       kcal_pp_txt,
+       fill=TEXT_COLOR,
+       font=FONT_LABEL_EMPH_B)
 
     return y + row_h
 
