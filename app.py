@@ -792,10 +792,13 @@ def draw_fig5():
     line_space = 42
     max_line_width = W - 2 * BORDER_W - 2 * CELL_PAD_X
 
-    # Encabezado (100 g o 100 mL) en negrilla
-    header_100 = f"Información nutricional ({'100 mL' if is_liquid else '100 g'}): "
-    d.text((x, y), header_100, fill=TEXT_COLOR, font=FONT_SMALL)
-    y += line_space
+    # Encabezado 100 g / 100 mL
+    label_main = "Información nutricional"
+    label_unit = f" ({'100 mL' if is_liquid else '100 g'}):"
+    d.text((x, y), label_main, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    w_main, _ = measure_text(d, label_main, FONT_SMALL_B)
+    d.text((x + w_main, y), label_unit, fill=TEXT_COLOR, font=FONT_SMALL)
+
 
     # Partes por 100 -> tokens con negrilla en Calorías, Sodio, Azúcares añadidos (título y valor)
     def tokens_item(label, value, unit="", bold=False):
@@ -838,8 +841,13 @@ def draw_fig5():
 
     # Encabezado por porción en negrilla
     y += line_space
-    header_pp = "Información nutricional (porción): "
-    d.text((x, y), header_pp, fill=TEXT_COLOR, font=FONT_SMALL)
+    label_main = "Información nutricional"
+    label_unit = " (porción):"
+    
+    d.text((x, y), label_main, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    w_main, _ = measure_text(d, label_main, FONT_SMALL_B)
+    d.text((x + w_main, y), label_unit, fill=TEXT_COLOR, font=FONT_SMALL)
+
     y += line_space
 
     tokens_pp = []
