@@ -310,10 +310,18 @@ def compute_cols_vertical(draw, labels_with_indent, v100_list, vpp_list, W):
     INDENT_PX = 28  # mismo valor que usas al dibujar
     
     for label, indent in labels_with_indent:
-        w, _ = measure_text(draw, label.strip(), FONT_LABEL)
-        total_w = w + indent * INDENT_PX
-        if total_w > name_w_max:
-            name_w_max = total_w
+    # usar fuente grande solo si es un nutriente enfatizado
+    font = FONT_LABEL_EMPH_B if label.strip() in [
+        "Grasa saturada",
+        "Grasas trans",
+        "Azúcares añadidos",
+        "Sodio"
+    ] else FONT_LABEL
+
+    w, _ = measure_text(draw, label.strip(), font)
+    total_w = w + indent * INDENT_PX
+    if total_w > name_w_max:
+        name_w_max = total_w
 
 
     v100_w_max = 0
