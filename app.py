@@ -794,7 +794,7 @@ def draw_fig5():
 
     # Encabezado (100 g o 100 mL) en negrilla
     header_100 = f"Información nutricional ({'100 mL' if is_liquid else '100 g'}): "
-    d.text((x, y), header_100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((x, y), header_100, fill=TEXT_COLOR, font=FONT_SMALL)
     y += line_space
 
     # Partes por 100 -> tokens con negrilla en Calorías, Sodio, Azúcares añadidos (título y valor)
@@ -839,7 +839,7 @@ def draw_fig5():
     # Encabezado por porción en negrilla
     y += line_space
     header_pp = "Información nutricional (porción): "
-    d.text((x, y), header_pp, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((x, y), header_pp, fill=TEXT_COLOR, font=FONT_SMALL)
     y += line_space
 
     tokens_pp = []
