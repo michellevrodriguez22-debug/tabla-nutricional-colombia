@@ -454,7 +454,7 @@ def draw_fig1():
     show_micro = len(rows_micro) > 0
 
     W = 580
-    header_h = 130
+    header_h = 165
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
 
@@ -483,7 +483,7 @@ def draw_fig1():
     d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
     
     # Línea delgada bajo el título 
-    y_line_title = BORDER_W + 15 + th + 40
+    y_line_title = BORDER_W + header_h - 55
     draw_hline(
     d,
     BORDER_W,
@@ -593,7 +593,7 @@ def draw_fig3():
     show_micro = False
 
     W = 580
-    header_h = 130
+    header_h = 165
     gap_after_title = 5
     foot_h = 90 if footnote_tail.strip() else 20
     body_rows_h = len(rows_nutri)*ROW_H
@@ -619,7 +619,7 @@ def draw_fig3():
     d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
     
     # Línea delgada bajo el título
-    y_line_title = BORDER_W + 15 + th + 18
+    y_line_title = BORDER_W + header_h - 55
     draw_hline(d, BORDER_W, W - BORDER_W, y_line_title, TEXT_COLOR, GRID_W)
 
     y0 = BORDER_W + 15 + th + 12
