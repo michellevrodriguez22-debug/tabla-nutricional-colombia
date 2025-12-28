@@ -382,8 +382,13 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     y_text_values = y + ROW_H + (ROW_H // 2) - 14
     w100, _ = measure_text(d, kcal_100_txt, FONT_LABEL_B)
     wpp, _  = measure_text(d, kcal_pp_txt,  FONT_LABEL_B)
-    d.text((col_x[2] - 15 - w100, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
-    d.text((col_x[3] - 15 - wpp,  y_text_values), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
+    
+    x100_center = (col_x[1] + col_x[2]) // 2
+    xpp_center  = (col_x[2] + col_x[3]) // 2
+    
+    d.text((x100_center - w100//2, y_text_values), kcal_100_txt, fill=TEXT_COLOR, font=FONT_LABEL_B)
+    d.text((xpp_center  - wpp//2,  y_text_values), kcal_pp_txt,  fill=TEXT_COLOR, font=FONT_LABEL_B)
+
     return y + row_h
 
 # ------------------------------------------------------------
