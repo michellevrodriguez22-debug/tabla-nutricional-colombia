@@ -365,8 +365,8 @@ def compute_cols_vertical(draw, labels_with_indent, v100_list, vpp_list, W):
 def common_rows():
     rows = [
         ("Grasa total",            f"{fmt_art9(fat_total_100_r)} g",     f"{fmt_art9(fat_total_pp_r)} g",       0, False, False),
-        ("  Grasa saturada",       f"{fmt_art9(sat_fat_100_r)} g",       f"{fmt_art9(sat_fat_pp_r)} g",         1, True,  False),
-        ("  Grasas trans",         f"{fmt_art9(trans_fat_100_mg_r)} mg",         f"{fmt_art9(trans_fat_pp_mg_r)} mg",           1, True,  False),        
+        ("Grasa saturada",       f"{fmt_art9(sat_fat_100_r)} g", f"{fmt_art9(sat_fat_pp_r)} g", 1, True, False),
+        ("Grasas trans",         f"{fmt_art9(trans_fat_100_mg_r)} mg", f"{fmt_art9(trans_fat_pp_mg_r)} mg", 1, True, False),
         ("Carbohidratos totales",  f"{fmt_art9(carb_100_r)} g",           f"{fmt_art9(carb_pp_r)} g",             0, False, False),
         ("Fibra dietaria",       f"{fmt_art9(fiber_100_r)} g",         f"{fmt_art9(fiber_pp_r)} g",           1, False, False),
         ("Azúcares totales",     f"{fmt_art9(sug_total_100_r)} g",
