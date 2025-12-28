@@ -82,6 +82,21 @@ def fmt_default_g(x):
     if float(x).is_integer(): return f"{int(x)}"
     return f"{x:.1f}".rstrip('0').rstrip('.')
 
+def fmt_one_decimal(v):
+    """
+    Para tabla lineal:
+    - Enteros → sin decimales
+    - Decimales → 1 decimal
+    """
+    try:
+        v = float(v)
+    except Exception:
+        return "0"
+    if v.is_integer():
+        return f"{int(v)}"
+    return f"{v:.1f}"
+
+
 def fmt_micro_value(name, unit, v):
     """
     Formateo de micronutrientes según 810:
