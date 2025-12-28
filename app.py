@@ -502,7 +502,7 @@ def draw_fig1():
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text  = y + (ROW_H//2) - 14
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
-        wv100,_ = measure_text(d, v100, font_val)
+        
         wvpp,_  = measure_text(d, vpp,  font_val)
         x100_center = (col_x[1] + col_x[2]) // 2
         xpp_center  = (col_x[2] + col_x[3]) // 2
@@ -631,6 +631,9 @@ def draw_fig3():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
+        
+        x100_center = (col_x[1] + col_x[2]) // 2
+        xpp_center  = (col_x[2] + (W - BORDER_W)) // 2
         
         d.text((x100_center - wv100//2, y_text), v100, fill=TEXT_COLOR, font=font_val)
         d.text((xpp_center  - wvpp//2,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
