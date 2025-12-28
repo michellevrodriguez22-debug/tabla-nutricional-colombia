@@ -285,6 +285,8 @@ BG_WHITE       = (255,255,255)
 FONT_TITLE     = get_font(46, bold=True)
 FONT_LABEL     = get_font(30, bold=False)
 FONT_LABEL_B   = get_font(30, bold=True)
+FONT_LABEL_EMPH     = get_font(int(30 * 1.3), bold=False)
+FONT_LABEL_EMPH_B   = get_font(int(30 * 1.3), bold=True)
 FONT_SMALL     = get_font(26, bold=False)
 FONT_SMALL_B   = get_font(26, bold=True)
 FONT_MICRO     = get_font(24, bold=False)
@@ -543,8 +545,13 @@ def draw_fig1():
     for label, v100, vpp, indent, bold, _ in rows_nutri:
         y += 1
         draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W)
-        font_lbl = FONT_LABEL_B if bold else FONT_LABEL
-        font_val = FONT_LABEL_B if bold else FONT_LABEL
+        if bold:
+            font_lbl = FONT_LABEL_EMPH_B
+            font_val = FONT_LABEL_EMPH_B
+        else:
+            font_lbl = FONT_LABEL
+            font_val = FONT_LABEL
+
         x_label = BORDER_W + CELL_PAD_X + indent*28
         y_text  = y + (ROW_H//2) - 14
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
