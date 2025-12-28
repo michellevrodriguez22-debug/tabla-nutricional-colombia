@@ -543,10 +543,10 @@ def draw_fig1():
             y += ROW_H_MICRO
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
-
+    
     # Líneas verticales hasta la segunda gruesa (fin de datos)
-    draw_vline(d, col_x[1], y_header_bottom, y, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1] + GRID_W//2, y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2] + GRID_W//2, y_header_bottom, y, TEXT_COLOR, GRID_W)
 
     # Pie multilínea
     if footnote_tail.strip():
@@ -647,8 +647,8 @@ def draw_fig3():
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
     # Líneas verticales hasta la segunda gruesa (fin de datos)
-    draw_vline(d, col_x[1], y_header_bottom, y, TEXT_COLOR, GRID_W)
-    draw_vline(d, col_x[2], y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[1] + GRID_W//2, y_header_bottom, y, TEXT_COLOR, GRID_W)
+    draw_vline(d, col_x[2] + GRID_W//2, y_header_bottom, y, TEXT_COLOR, GRID_W)
 
     # Pie multilínea
     if footnote_tail.strip():
