@@ -305,7 +305,7 @@ def compute_cols_vertical(draw, labels_with_indent, v100_list, vpp_list, W):
     col100_w, _ = measure_text(draw, col100_label, FONT_SMALL_B)
     colpp_w, _ = measure_text(draw, colpp_label, FONT_SMALL_B)
 
-    final_name_width = name_w_max + 15
+    final_name_width = name_w_max + 15 + GRID_W
 
     name_to_values_gap = 35
     values_gap = 20
