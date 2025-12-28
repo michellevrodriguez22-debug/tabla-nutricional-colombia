@@ -494,8 +494,12 @@ def draw_fig1():
         d.text((x_label, y_text), label, fill=TEXT_COLOR, font=font_lbl)
         wv100,_ = measure_text(d, v100, font_val)
         wvpp,_  = measure_text(d, vpp,  font_val)
-        d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=font_val)
-        d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+        x100_center = (col_x[1] + col_x[2]) // 2
+        xpp_center  = (col_x[2] + col_x[3]) // 2
+        
+        d.text((x100_center - wv100//2, y_text), v100, fill=TEXT_COLOR, font=font_val)
+        d.text((xpp_center  - wvpp//2,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+
         y += ROW_H
 
     if show_micro:
@@ -510,8 +514,12 @@ def draw_fig1():
             d.text((x_label, y_text), label, fill=TEXT_COLOR, font=FONT_MICRO)
             wv100,_ = measure_text(d, v100, FONT_MICRO)
             wvpp,_  = measure_text(d, vpp,  FONT_MICRO)
-            d.text((col_x[2]-15-wv100, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
-            d.text((col_x[3]-15-wvpp,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
+            x100_center = (col_x[1] + col_x[2]) // 2
+            xpp_center  = (col_x[2] + col_x[3]) // 2
+            
+            d.text((x100_center - wv100//2, y_text), v100, fill=TEXT_COLOR, font=FONT_MICRO)
+            d.text((xpp_center  - wvpp//2,  y_text), vpp,  fill=TEXT_COLOR, font=FONT_MICRO)
+
             y += ROW_H_MICRO
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
