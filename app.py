@@ -494,7 +494,7 @@ def draw_fig1():
 )
 
     # porciones
-    y0 = BORDER_W + 15 + th + 12
+    y0 = BORDER_W + 15 + th + 60
     d.text((BORDER_W + CELL_PAD_X, y0),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
@@ -622,7 +622,7 @@ def draw_fig3():
     y_line_title = BORDER_W + header_h - 55
     draw_hline(d, BORDER_W, W - BORDER_W, y_line_title, TEXT_COLOR, GRID_W)
 
-    y0 = BORDER_W + 15 + th + 12
+    y0 = BORDER_W + 15 + th + 60
     d.text((BORDER_W + CELL_PAD_X, y0),
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
