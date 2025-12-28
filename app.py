@@ -389,11 +389,11 @@ def micro_rows():
         vpp  = vm_pp[(name, unit)]
 
         rows.append((
-            name,
-            fmt_art9_micro(v100, unit),
-            fmt_art9_micro(vpp, unit),
-            0, False, True
-        ))
+    name,
+    f"{fmt_art9(v100, is_micro=True)} {unit}",
+    f"{fmt_art9(vpp,  is_micro=True)} {unit}",
+    0, False, True
+))
 
     return rows
 
