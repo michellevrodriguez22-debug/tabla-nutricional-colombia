@@ -72,19 +72,6 @@ def round_mg(v_mg):
     if v_mg < 5: return 0
     return int(round(v_mg))
 
-def fmt_one_decimal(v):
-    try: return f"{float(v):.1f}"
-    except Exception: return "0.0"
-
-def fmt_carbs_rule(v):
-    try: v = float(v)
-    except Exception: return "0"
-    av = abs(v)
-    if av < 10:
-        return f"{v:.1f}".rstrip('0').rstrip('.') if v % 1 != 0 else f"{v:.1f}"
-    if av < 100: return f"{int(round(v))}"
-    return f"{int(round(v))}"
-
 def fmt_int(v):
     try: return f"{int(round(float(v)))}"
     except Exception: return "0"
@@ -113,6 +100,31 @@ def fmt_micro_value(name, unit, v):
     if abs(v) < 10:  return f"{v:.1f} {unit}"
     if abs(v) >= 100: return f"{int(round(v))} {unit}"
     return f"{int(round(v))} {unit}"
+
+def fmt_art9(value, is_micro=False):
+    """
+    Formato según Artículo 9 – Resolución 810 de 2021
+    is_micro = True para vitaminas y minerales
+    """
+    try:
+        v = float(value)
+    except Exception:
+        return "0"
+
+    av = abs(v)
+
+    if av >= 1000:
+        return f"{int(round(v))}"
+    if av >= 100:
+        return f"{int(round(v))}"
+    if av >= 10:
+        return f"{int(round(v))}"
+    if av >= 1:
+        return f"{v:.1f}".rstrip('0').rstrip('.')
+    # av < 1
+    if is_micro:
+        return f"{v:.2f}".rstrip('0').rstrip('.')
+    return f"{v:.1f}".rstrip('0').rstrip('.')
 
 # ------------------------------------------------------------
 # SIDEBAR
@@ -205,13 +217,24 @@ kcal_pp  = round_kcal(kcal_pp_raw)
 
 # Redondeos y no significativas
 def nonsig_zero_g(name, v):
-    if name == "Grasa total" and v < 0.5: return 0.0
-    if name in ("Grasa saturada","Grasas trans") and v < 0.1: return 0.0
-    return v
+    limits = {
+        "Carbohidratos totales": 0.5,
+        "Azúcares totales": 0.5,
+        "Proteína": 0.5,
+        "Grasa total": 0.5,
+        "Fibra dietaria": 0.5,
+        "Grasa saturada": 0.1,
+    }
+    return 0.0 if v <= limits.get(name, -1) else v
 
-def nonsig_zero_mg(name, vmg):
-    if name == "Sodio" and vmg < 5: return 0
-    return vmg
+
+def nonsig_zero_mg(name, v):
+    limits = {
+        "Grasas trans": 100,
+        "Sodio": 5,
+    }
+    return 0 if v <= limits.get(name, -1) else v
+
 
 # Por 100
 fat_total_100_r     = round_g(nonsig_zero_g("Grasa total",       fat_total_100))
@@ -329,32 +352,32 @@ def compute_cols_vertical(draw, labels_with_indent, v100_list, vpp_list, W):
 # ------------------------------------------------------------
 def common_rows():
     rows = [
-        ("Grasa total",            f"{fmt_one_decimal(fat_total_100_r)} g",     f"{fmt_one_decimal(fat_total_pp_r)} g",       0, False, False),
-        ("  Grasa saturada",       f"{fmt_one_decimal(sat_fat_100_r)} g",       f"{fmt_one_decimal(sat_fat_pp_r)} g",         1, True,  False),
-        ("  Grasas trans",         f"{fmt_int(trans_fat_100_mg_r)} mg",         f"{fmt_int(trans_fat_pp_mg_r)} mg",           1, True,  False),        
-        ("Carbohidratos totales",  f"{fmt_carbs_rule(carb_100_r)} g",           f"{fmt_carbs_rule(carb_pp_r)} g",             0, False, False),
-        ("Fibra dietaria",       f"{fmt_one_decimal(fiber_100_r)} g",         f"{fmt_one_decimal(fiber_pp_r)} g",           1, False, False),
-        ("Azúcares totales",     f"{fmt_one_decimal(sug_total_100_r)} g",
-                            f"{fmt_one_decimal(sug_total_pp_r)} g", 1, False, False),
-        ("Azúcares añadidos",  f"{fmt_one_decimal(sug_added_100_r)} g",
-                            f"{fmt_one_decimal(sug_added_pp_r)} g", 2, True, False),
-        ("Proteína",               f"{fmt_one_decimal(protein_100_r)} g",       f"{fmt_one_decimal(protein_pp_r)} g",         0, False, False),
-        ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",            f"{fmt_int(sodium_pp_mg_r)} mg",              0, True,  False),
+        ("Grasa total",            f"{fmt_art9(fat_total_100_r)} g",     f"{fmt_art9(fat_total_pp_r)} g",       0, False, False),
+        ("  Grasa saturada",       f"{fmt_art9(sat_fat_100_r)} g",       f"{fmt_art9(sat_fat_pp_r)} g",         1, True,  False),
+        ("  Grasas trans",         f"{fmt_art9(trans_fat_100_mg_r)} mg",         f"{fmt_art9(trans_fat_pp_mg_r)} mg",           1, True,  False),        
+        ("Carbohidratos totales",  f"{fmt_art9(carb_100_r)} g",           f"{fmt_art9(carb_pp_r)} g",             0, False, False),
+        ("Fibra dietaria",       f"{fmt_art9(fiber_100_r)} g",         f"{fmt_art9(fiber_pp_r)} g",           1, False, False),
+        ("Azúcares totales",     f"{fmt_art9(sug_total_100_r)} g",
+                            f"{fmt_art9(sug_total_pp_r)} g", 1, False, False),
+        ("Azúcares añadidos",  f"{fmt_art9(sug_added_100_r)} g",
+                            f"{fmt_art9(sug_added_pp_r)} g", 2, True, False),
+        ("Proteína",               f"{fmt_art9(protein_100_r)} g",       f"{fmt_art9(protein_pp_r)} g",         0, False, False),
+        ("Sodio",                  f"{fmt_art9(sodium_100_mg_r)} mg",            f"{fmt_art9(sodium_pp_mg_r)} mg",              0, True,  False),
     ]
     if include_poly:
         # Insertarlo después de Fibra y antes de Azúcares totales
         try:
             idx_azuc_tot = next(i for i, r in enumerate(rows) if r[0].strip() == "Azúcares totales")
-            rows.insert(idx_azuc_tot, ("  Polialcoholes", f"{fmt_one_decimal(poly_100_r)} g", f"{fmt_one_decimal(poly_pp_r)} g", 1, False, False))
+            rows.insert(idx_azuc_tot, ("  Polialcoholes", f"{fmt_art9(poly_100_r)} g", f"{fmt_art9(poly_pp_r)} g", 1, False, False))
         except StopIteration:
             pass
     return rows
 
 def micro_rows():
-    # Orden oficial: Vitamina A, Vitamina D, Hierro, Calcio, Zinc
     order = ["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]
     selected = [(n,u) for (n,u) in vm_values_rounded.keys()]
     ordered = []
+
     for name in order:
         for (n,u) in selected:
             if n == name:
@@ -364,9 +387,14 @@ def micro_rows():
     for (name, unit) in ordered:
         v100 = vm_values_rounded[(name, unit)]
         vpp  = vm_pp[(name, unit)]
-        v100_txt = fmt_micro_value(name, unit, v100)
-        vpp_txt  = fmt_micro_value(name, unit, vpp)
-        rows.append((name, v100_txt, vpp_txt, 0, False, True))
+
+        rows.append((
+            name,
+            fmt_art9_micro(v100, unit),
+            fmt_art9_micro(vpp, unit),
+            0, False, True
+        ))
+
     return rows
 
 # ------------------------------------------------------------
