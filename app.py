@@ -619,7 +619,7 @@ def draw_fig3():
     d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
     
     # Línea delgada bajo el título
-    y_line_title = BORDER_W + header_h - 75
+    y_line_title = BORDER_W + 15 + th + 22
     draw_hline(d, BORDER_W, W - BORDER_W, y_line_title, TEXT_COLOR, GRID_W)
 
     y0 = BORDER_W + 15 + th + 60
