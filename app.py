@@ -330,8 +330,8 @@ def common_rows():
         ("  Grasas trans",         f"{fmt_int(trans_fat_100_mg_r)} mg",         f"{fmt_int(trans_fat_pp_mg_r)} mg",           1, True,  False),        
         ("Carbohidratos totales",  f"{fmt_carbs_rule(carb_100_r)} g",           f"{fmt_carbs_rule(carb_pp_r)} g",             0, False, False),
         ("  Fibra dietaria",       f"{fmt_one_decimal(fiber_100_r)} g",         f"{fmt_one_decimal(fiber_pp_r)} g",           1, False, False),
-        ("Azúcares totales",       f"{fmt_one_decimal(sug_total_100_r)} g",     f"{fmt_one_decimal(sug_total_pp_r)} g",       0, False, False),
-        ("  Azúcares añadidos",    f"{fmt_one_decimal(sug_added_100_r)} g",     f"{fmt_one_decimal(sug_added_pp_r)} g",       1, True,  False),
+        ("  Azúcares totales",       f"{fmt_one_decimal(sug_total_100_r)} g",     f"{fmt_one_decimal(sug_total_pp_r)} g",       0, False, False),
+        ("    Azúcares añadidos",    f"{fmt_one_decimal(sug_added_100_r)} g",     f"{fmt_one_decimal(sug_added_pp_r)} g",       1, True,  False),
         ("Proteína",               f"{fmt_one_decimal(protein_100_r)} g",       f"{fmt_one_decimal(protein_pp_r)} g",         0, False, False),
         ("Sodio",                  f"{fmt_int(sodium_100_mg_r)} mg",            f"{fmt_int(sodium_pp_mg_r)} mg",              0, True,  False),
     ]
