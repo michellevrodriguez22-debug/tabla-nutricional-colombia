@@ -799,6 +799,7 @@ def draw_fig5():
     w_main, _ = measure_text(d, label_main, FONT_SMALL_B)
     d.text((x + w_main, y), label_unit, fill=TEXT_COLOR, font=FONT_SMALL)
 
+    y += line_space
 
     # Partes por 100 -> tokens con negrilla en Calorías, Sodio, Azúcares añadidos (título y valor)
     def tokens_item(label, value, unit="", bold=False):
