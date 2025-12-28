@@ -280,11 +280,16 @@ def measure_text(draw, text, font):
     bbox = draw.textbbox((0,0), text, font=font)
     return bbox[2]-bbox[0], bbox[3]-bbox[1]
 
-def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
+def compute_cols_vertical(draw, labels_with_indent, v100_list, vpp_list, W):
     name_w_max = 0
-    for t in labels:
-        w,_ = measure_text(draw, t, FONT_LABEL)
-        if w > name_w_max: name_w_max = w
+    INDENT_PX = 28  # mismo valor que usas al dibujar
+    
+    for label, indent in labels_with_indent:
+        w, _ = measure_text(draw, label.strip(), FONT_LABEL)
+        total_w = w + indent * INDENT_PX
+        if total_w > name_w_max:
+            name_w_max = total_w
+
 
     v100_w_max = 0
     for t in v100_list:
@@ -299,9 +304,8 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     col100_label, colpp_label = column_labels()
     col100_w, _ = measure_text(draw, col100_label, FONT_SMALL_B)
     colpp_w, _ = measure_text(draw, colpp_label, FONT_SMALL_B)
-    
-    azucares_added_width, _ = measure_text(draw, "    Azúcares añadidos", FONT_LABEL)
-    final_name_width = max(name_w_max, azucares_added_width) + 15
+
+    final_name_width = name_w_max + 15
 
     name_to_values_gap = 35
     values_gap = 20
@@ -459,8 +463,9 @@ def draw_fig1():
     H_temp = 100
     img_temp = Image.new("RGB", (W, H_temp), BG_WHITE)
     d_temp = ImageDraw.Draw(img_temp)
-
-    labels_all = [r[0] for r in rows_nutri] + ([r[0] for r in rows_micro] if show_micro else [])
+    
+    labels_all = [(r[0], r[3]) for r in rows_nutri] + \
+             ([(r[0], r[3]) for r in rows_micro] if show_micro else [])
     v100_all   = [r[1] for r in rows_nutri] + ([r[1] for r in rows_micro] if show_micro else [])
     vpp_all    = [r[2] for r in rows_nutri] + ([r[2] for r in rows_micro] if show_micro else [])
     col_x, W = compute_cols_vertical(d_temp, labels_all, v100_all, vpp_all, W)
@@ -585,8 +590,8 @@ def draw_fig3():
     H_temp = 100
     img_temp = Image.new("RGB", (W, H_temp), BG_WHITE)
     d_temp = ImageDraw.Draw(img_temp)
-
-    labels_all = [r[0] for r in rows_nutri]
+    
+    labels_all = [(r[0], r[3]) for r in rows_nutri]
     v100_all   = [r[1] for r in rows_nutri]
     vpp_all    = [r[2] for r in rows_nutri]
     col_x, W = compute_cols_vertical(d_temp, labels_all, v100_all, vpp_all, W)
