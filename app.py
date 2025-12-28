@@ -479,10 +479,12 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
 # ------------------------------------------------------------
 # Helper: renderizado rich text con negrilla parcial + salto de línea
 # ------------------------------------------------------------
+
 def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap=4, first_line_x=None):
     """tokens = [(text, is_bold), ...]"""
     lines = []
     current = []
+
     def measure_tokens(tokens_list):
         w_total = 0
         for t, b in tokens_list:
@@ -490,6 +492,7 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
             w_total += w
         return w_total
 
+    # Construir líneas
     for t, b in tokens:
         if t == "":
             continue
@@ -501,20 +504,23 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
                 lines.append(current)
                 current = [(t, b)]
             else:
-                # palabra muy larga: forzar corte
                 lines.append([(t, b)])
                 current = []
 
     if current:
         lines.append(current)
-        for i, line in enumerate(lines):
-            cx = first_line_x if (i == 0 and first_line_x is not None) else x
-            for t, b in line:
-                f = font_bold if b else font_reg
-                d.text((cx, y), t, fill=TEXT_COLOR, font=f)
-                w, _ = measure_text(d, t, f)
-                cx += w
-                y += font_reg.size + line_gap
+
+    # Dibujar líneas
+    for i, line in enumerate(lines):
+        cx = first_line_x if (i == 0 and first_line_x is not None) else x
+        for t, b in line:
+            f = font_bold if b else font_reg
+            d.text((cx, y), t, fill=TEXT_COLOR, font=f)
+            w, _ = measure_text(d, t, f)
+            cx += w
+        y += font_reg.size + line_gap  # ✅ SOLO AQUÍ
+
+    return y
 
 
 # ------------------------------------------------------------
