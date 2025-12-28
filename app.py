@@ -507,8 +507,12 @@ def draw_fig1():
         x100_center = (col_x[1] + col_x[2]) // 2
         xpp_center  = (col_x[2] + col_x[3]) // 2
         
+        x100_center = (col_x[1] + col_x[2]) // 2
+        xpp_center  = (col_x[2] + (W - BORDER_W)) // 2
+        
         d.text((x100_center - wv100//2, y_text), v100, fill=TEXT_COLOR, font=font_val)
         d.text((xpp_center  - wvpp//2,  y_text), vpp,  fill=TEXT_COLOR, font=font_val)
+
 
         y += ROW_H
 
