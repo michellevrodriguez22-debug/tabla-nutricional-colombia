@@ -418,7 +418,7 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     d.text((BORDER_W + CELL_PAD_X, y_text_title), "Calorías (kcal)", fill=TEXT_COLOR, font=FONT_LABEL_EMPH_B)
 
     c100, cpp = column_labels()
-    w_c100, _ = measure_text(d, c100, FONT_SMALL_)
+    w_c100, _ = measure_text(d, c100, FONT_SMALL_B)
     w_cpp, _ = measure_text(d, cpp, FONT_SMALL_B)
     x100_center = (col_x[1] + col_x[2]) // 2
     xpp_center  = (col_x[2] + col_x[3]) // 2
