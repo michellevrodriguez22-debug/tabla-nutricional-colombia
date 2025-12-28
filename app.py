@@ -299,8 +299,8 @@ def compute_cols_vertical(draw, labels, v100_list, vpp_list, W):
     col100_label, colpp_label = column_labels()
     col100_w, _ = measure_text(draw, col100_label, FONT_SMALL_B)
     colpp_w, _ = measure_text(draw, colpp_label, FONT_SMALL_B)
-
-    azucares_added_width, _ = measure_text(draw, "  Azúcares añadidos", FONT_LABEL)
+    
+    azucares_added_width, _ = measure_text(draw, "    Azúcares añadidos", FONT_LABEL)
     final_name_width = max(name_w_max, azucares_added_width) + 15
 
     name_to_values_gap = 35
