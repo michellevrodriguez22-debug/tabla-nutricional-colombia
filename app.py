@@ -123,8 +123,8 @@ def fmt_art9(value, is_micro=False):
         return f"{v:.1f}".rstrip('0').rstrip('.')
     # av < 1
     if is_micro:
-        return f"{v:.2f}".rstrip('0').rstrip('.')
-    return f"{v:.1f}".rstrip('0').rstrip('.')
+    return f"{v:.2f}"   # 👈 SIN rstrip
+return f"{v:.1f}"      # 👈 SIN rstrip
 
 # ------------------------------------------------------------
 # SIDEBAR
