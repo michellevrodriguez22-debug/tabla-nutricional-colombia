@@ -481,6 +481,10 @@ def draw_fig1():
     title = "Información Nutricional"
     tw, th = measure_text(d, title, FONT_TITLE)
     d.text(((W - tw)//2, BORDER_W + 15), title, fill=TEXT_COLOR, font=FONT_TITLE)
+    
+    # Línea delgada bajo el título 
+    y_line_title = BORDER_W + 15 + th + 6
+    draw_hline(d, BORDER_W + CELL_PAD_X, W - BORDER_W - CELL_PAD_X, y_line_title, TEXT_COLOR, GRID_W)
 
     # porciones
     y0 = BORDER_W + 15 + th + 12
