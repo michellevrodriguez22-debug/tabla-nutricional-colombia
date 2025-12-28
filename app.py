@@ -479,7 +479,7 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
 # ------------------------------------------------------------
 # Helper: renderizado rich text con negrilla parcial + salto de línea
 # ------------------------------------------------------------
-def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap=4):
+def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap=4, first_line_x=None):
     """tokens = [(text, is_bold), ...]"""
     lines = []
     current = []
@@ -507,17 +507,15 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
 
     if current:
         lines.append(current)
+        for i, line in enumerate(lines):
+            cx = first_line_x if (i == 0 and first_line_x is not None) else x
+            for t, b in line:
+                f = font_bold if b else font_reg
+                d.text((cx, y), t, fill=TEXT_COLOR, font=f)
+                w, _ = measure_text(d, t, f)
+                cx += w
+                y += font_reg.size + line_gap
 
-    # dibujar
-    for line in lines:
-        cx = x
-        for t, b in line:
-            f = font_bold if b else font_reg
-            d.text((cx, y), t, fill=TEXT_COLOR, font=f)
-            w, _ = measure_text(d, t, f)
-            cx += w
-        y += font_reg.size + line_gap
-    return y
 
 # ------------------------------------------------------------
 # FIGURA 1 — VERTICAL ESTÁNDAR
