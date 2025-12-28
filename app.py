@@ -792,14 +792,19 @@ def draw_fig5():
     line_space = 42
     max_line_width = W - 2 * BORDER_W - 2 * CELL_PAD_X
 
-    # Encabezado 100 g / 100 mL
+    # Encabezado 100 g / 100 mL (inline con contenido)
     label_main = "Información nutricional"
     label_unit = f" ({'100 mL' if is_liquid else '100 g'}):"
+
+    # Dibujar encabezado
     d.text((x, y), label_main, fill=TEXT_COLOR, font=FONT_SMALL_B)
     w_main, _ = measure_text(d, label_main, FONT_SMALL_B)
     d.text((x + w_main, y), label_unit, fill=TEXT_COLOR, font=FONT_SMALL)
 
-    y += line_space
+    # Nuevo punto de inicio para el contenido
+    w_unit, _ = measure_text(d, label_unit, FONT_SMALL)
+    x_content = x + w_main + w_unit + 10  # 10 px de aire visual
+
 
     # Partes por 100 -> tokens con negrilla en Calorías, Sodio, Azúcares añadidos (título y valor)
     def tokens_item(label, value, unit="", bold=False):
@@ -838,7 +843,17 @@ def draw_fig5():
         tokens_100 += [(", ", False)] if i < len(micro_texts)-1 else [(".", False)]
 
     # Render envuelto
-    y = draw_rich_wrapped_text(d, x, y, tokens_100, FONT_SMALL, FONT_SMALL_B, max_line_width, line_gap=4)
+    y = draw_rich_wrapped_text(
+    d,
+    x_content,  # 👈 empieza después del encabezado
+    y,
+    tokens_100,
+    FONT_SMALL,
+    FONT_SMALL_B,
+    max_line_width - (x_content - x),  # 👈 ancho restante real
+    line_gap=4
+)
+
 
     # Encabezado por porción en negrilla
     y += line_space
