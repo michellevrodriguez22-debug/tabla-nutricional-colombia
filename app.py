@@ -374,8 +374,12 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
     c100, cpp = column_labels()
     w_c100, _ = measure_text(d, c100, FONT_SMALL_B)
     w_cpp, _ = measure_text(d, cpp, FONT_SMALL_B)
-    d.text((col_x[2] - 15 - w_c100, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
-    d.text((col_x[3] - 15 - w_cpp,  y_text_title), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+    x100_center = (col_x[1] + col_x[2]) // 2
+    xpp_center  = (col_x[2] + col_x[3]) // 2
+    
+    d.text((x100_center - w_c100//2, y_text_title), c100, fill=TEXT_COLOR, font=FONT_SMALL_B)
+    d.text((xpp_center  - w_cpp//2,  y_text_title), cpp,  fill=TEXT_COLOR, font=FONT_SMALL_B)
+
 
     draw_hline(d, col_x[1], W-BORDER_W, y + ROW_H, TEXT_COLOR, GRID_W)
     
