@@ -805,29 +805,20 @@ def draw_fig5():
         return toks
 
     tokens_100 = []
-    # Calorías (bold + valor)
     tokens_100 += tokens_item("Calorías", f"{fmt_int(kcal_100)}", bold=True) + [(", ", False)]
-    # Grasa total
     tokens_100 += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_100_r)}", "g", bold=False) + [(", ", False)]
-    # Grasa saturada
     tokens_100 += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_100_r)}", "g", bold=False) + [(", ", False)]
-    # Grasas trans
     tokens_100 += tokens_item("Grasas trans", f"{fmt_int(trans_fat_100_mg_r)}", "mg", bold=False) + [(", ", False)]
-    # Sodio (bold + valor)
     tokens_100 += tokens_item("Sodio", f"{fmt_int(sodium_100_mg_r)}", "mg", bold=True) + [(", ", False)]
-    # Carbohidratos totales
     tokens_100 += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_100_r)}", "g", bold=False) + [(", ", False)]
-    # Fibra
     tokens_100 += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_100_r)}", "g", bold=False) + [(", ", False)]
-    # Polialcoholes (si aplica)
     if include_poly:
         tokens_100 += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_100_r)}", "g", bold=False) + [(", ", False)]
-    # Azúcares totales
+        
     tokens_100 += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_100_r)}", "g", bold=False) + [(", ", False)]
-    # Azúcares añadidos (bold + valor)
     tokens_100 += tokens_item("Azúcares añadidos", f"{fmt_one_decimal(sug_added_100_r)}", "g", bold=True) + [(", ", False)]
-    # Proteína
     tokens_100 += tokens_item("Proteína", f"{fmt_one_decimal(protein_100_r)}", "g", bold=False) + [(", ", False)]
+
     # Micronutrientes (mantener formato descriptivo simple, sin negrilla)
     def vm_or_zero(name, unit_key):
         return fmt_micro_value(name, unit_key, vm_values_rounded.get((name, unit_key), 0))
