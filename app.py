@@ -964,7 +964,6 @@ def draw_fig5():
     )
 
     # Encabezado por porción en negrilla
-    y += line_space
     label_main = "Información nutricional"
     label_unit = " (porción):"
     
