@@ -511,7 +511,7 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
         lines.append(current)
 
     # Dibujar líneas
-    def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap=4, first_line_x=None):
+def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap=4, first_line_x=None):
     lines = []
     current = []
 
@@ -545,10 +545,7 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
             d.text((cx, y), t, fill=TEXT_COLOR, font=f)
             w, _ = measure_text(d, t, f)
             cx += w
-        y += font_reg.size + line_gap  # ✅ SOLO UNA VEZ POR LÍNEA
-
-    return y
-
+        y += font_reg.size + line_gap
 
     return y
 
@@ -877,17 +874,17 @@ def draw_fig5():
         tokens_100 += [(", ", False)] if i < len(micro_texts)-1 else [(".", False)]
 
     # Render envuelto
-    
-    d,
-    x_content,  # 👈 empieza después del encabezado
-    y,
-    tokens_100,
-    FONT_SMALL,
-    FONT_SMALL_B,
-    max_line_width - (x_content - x),  # 👈 ancho restante real
-    line_gap=4
-)
-
+    y = draw_rich_wrapped_text(
+        d,
+        x,                    
+        y,
+        tokens_100,
+        FONT_SMALL,
+        FONT_SMALL_B,
+        max_line_width,
+        line_gap=4,
+        first_line_x=x_content
+    )
 
     # Encabezado por porción en negrilla
     y += line_space
