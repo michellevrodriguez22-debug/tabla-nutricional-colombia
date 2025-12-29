@@ -511,6 +511,33 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
         lines.append(current)
 
     # Dibujar líneas
+    def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap=4, first_line_x=None):
+    lines = []
+    current = []
+
+    def measure_tokens(tokens_list):
+        w_total = 0
+        for t, b in tokens_list:
+            w, _ = measure_text(d, t, font_bold if b else font_reg)
+            w_total += w
+        return w_total
+
+    # Construcción de líneas
+    for t, b in tokens:
+        if not t:
+            continue
+        tentative = current + [(t, b)]
+        if measure_tokens(tentative) <= max_w:
+            current = tentative
+        else:
+            if current:
+                lines.append(current)
+            current = [(t, b)]
+
+    if current:
+        lines.append(current)
+
+    # Renderizado
     for i, line in enumerate(lines):
         cx = first_line_x if (i == 0 and first_line_x is not None) else x
         for t, b in line:
@@ -518,7 +545,10 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
             d.text((cx, y), t, fill=TEXT_COLOR, font=f)
             w, _ = measure_text(d, t, f)
             cx += w
-        y += font_reg.size + line_gap  # ✅ SOLO AQUÍ
+        y += font_reg.size + line_gap  # ✅ SOLO UNA VEZ POR LÍNEA
+
+    return y
+
 
     return y
 
@@ -847,7 +877,7 @@ def draw_fig5():
         tokens_100 += [(", ", False)] if i < len(micro_texts)-1 else [(".", False)]
 
     # Render envuelto
-    y = draw_rich_wrapped_text(
+    
     d,
     x_content,  # 👈 empieza después del encabezado
     y,
@@ -911,7 +941,17 @@ def draw_fig5():
         tokens_pp += [(mt, False)]
         tokens_pp += [(", ", False)] if i < len(micro_pp_texts)-1 else [(".", False)]
 
-    y = draw_rich_wrapped_text(d, x, y, tokens_pp, FONT_SMALL, FONT_SMALL_B, max_line_width, line_gap=4)
+    y = draw_rich_wrapped_text(
+    d,
+    x,                     # ✅ margen izquierdo REAL
+    y,
+    tokens_100,
+    FONT_SMALL,
+    FONT_SMALL_B,
+    max_line_width,
+    line_gap=4,
+    first_line_x=x_content # ✅ solo la primera línea
+)
 
     # Pie multilínea (regular)
     if footnote_tail.strip():
