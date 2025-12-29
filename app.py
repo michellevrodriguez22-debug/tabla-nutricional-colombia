@@ -515,27 +515,32 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
     lines = []
     current = []
 
-    def measure_tokens(tokens_list):
-        w_total = 0
-        for t, b in tokens_list:
-            w, _ = measure_text(d, t, font_bold if b else font_reg)
-            w_total += w
-        return w_total
+def measure_tokens(tokens_list, is_first_line=False):
+    w_total = 0
+    for t, b in tokens_list:
+        w, _ = measure_text(d, t, font_bold if b else font_reg)
+        w_total += w
+            
+    if is_first_line and first_line_x is not None:
+        w_total += (first_line_x - x)
+            
+    return w_total
+
 
     # Construcción de líneas
     for t, b in tokens:
         if not t:
             continue
-        tentative = current + [(t, b)]
-        if measure_tokens(tentative) <= max_w:
-            current = tentative
-        else:
-            if current:
-                lines.append(current)
-            current = [(t, b)]
+            is_first = len(lines) == 0
+            tentative = current + [(t, b)]
+            
+            if measure_tokens(tentative, is_first_line=is_first) <= max_w:
+                current = tentative
+            else:
+                if current:
+                    lines.append(current)
+                current = [(t, b)]
 
-    if current:
-        lines.append(current)
 
     # Renderizado
     for i, line in enumerate(lines):
