@@ -891,8 +891,10 @@ def draw_fig5():
     Negrilla para: Información nutricional (ambos encabezados), Calorías + valor,
     Sodio + valor, Azúcares añadidos + valor, y títulos de Tamaño de porción / Número de porciones.
     """
-    W, H = 1700, 520
+    W = 1700
+    H = 400  # altura inicial mínima
     img = Image.new("RGB", (W, H), BG_WHITE)
+
     d = ImageDraw.Draw(img)
 
     x = BORDER_W + CELL_PAD_X
@@ -1039,8 +1041,21 @@ def draw_fig5():
         y += line_space
         y = draw_rich_wrapped_text(d, x, y, foot_tokens, FONT_SMALL, FONT_SMALL_B, max_line_width, line_gap=4)
 
-    d.rectangle([0, 0, W-1, H-1], outline=TEXT_COLOR, width=BORDER_W)
-    return img
+# Ajustar altura final al último contenido
+H_final = int(y + BORDER_W + 10)
+
+# Recortar imagen al contenido real
+img = img.crop((0, 0, W, H_final))
+d = ImageDraw.Draw(img)
+
+    # Ajustar altura final al último contenido
+H_final = int(y + BORDER_W + 10)
+img = img.crop((0, 0, W, H_final))
+d = ImageDraw.Draw(img)
+
+# Marco final alineado al último renglón
+d.rectangle([0, 0, W-1, H_final-1], outline=TEXT_COLOR, width=BORDER_W)
+return img
 
 # ------------------------------------------------------------
 # PREVISUALIZACIÓN + EXPORTACIÓN
