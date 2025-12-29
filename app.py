@@ -898,8 +898,6 @@ def draw_fig5():
     w_unit, _ = measure_text(d, label_unit, FONT_SMALL)
     x_content_pp = x + w_main + w_unit + 10
 
-    y += line_space
-
     tokens_pp = []
     # Tamaño de porción (negrilla solo título)
     tokens_pp += [("Tamaño de porción:", True), (" ", False), (f"{household_name} ({int(round(portion_size))} {portion_unit})", False), (", ", False)]
@@ -944,7 +942,7 @@ def draw_fig5():
     y = draw_rich_wrapped_text(
     d,
     x,                       # margen izquierdo
-    y,
+    y,                       # 👈 MISMO y del encabezado
     tokens_pp,
     FONT_SMALL,
     FONT_SMALL_B,
@@ -952,6 +950,7 @@ def draw_fig5():
     line_gap=4,
     first_line_x=x_content_pp
 )
+
 
     # Pie multilínea (regular)
     if footnote_tail.strip():
