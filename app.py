@@ -895,6 +895,9 @@ def draw_fig5():
     w_main, _ = measure_text(d, label_main, FONT_SMALL_B)
     d.text((x + w_main, y), label_unit, fill=TEXT_COLOR, font=FONT_SMALL)
 
+    w_unit, _ = measure_text(d, label_unit, FONT_SMALL)
+    x_content_pp = x + w_main + w_unit + 10
+
     y += line_space
 
     tokens_pp = []
@@ -940,14 +943,14 @@ def draw_fig5():
 
     y = draw_rich_wrapped_text(
     d,
-    x,                     # ✅ margen izquierdo REAL
+    x,                       # margen izquierdo
     y,
-    tokens_100,
+    tokens_pp,
     FONT_SMALL,
     FONT_SMALL_B,
     max_line_width,
     line_gap=4,
-    first_line_x=x_content # ✅ solo la primera línea
+    first_line_x=x_content_pp
 )
 
     # Pie multilínea (regular)
