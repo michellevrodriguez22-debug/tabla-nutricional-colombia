@@ -922,7 +922,7 @@ def draw_fig5():
         return toks
 
     tokens_100 = []
-    tokens_100 += tokens_item("Calorías", f"{fmt_int(kcal_100)}", bold=True) + [(", ", False)]
+    tokens_100 += tokens_item("Calorías", f"{fmt_int(kcal_100)}", "kcal", bold=True) + [(", ", False)]
     tokens_100 += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_100_r)}", "g", bold=False) + [(", ", False)]
     tokens_100 += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_100_r)}", "g", bold=False) + [(", ", False)]
     tokens_100 += tokens_item("Grasas trans", f"{fmt_int(trans_fat_100_mg_r)}", "mg", bold=False) + [(", ", False)]
@@ -981,7 +981,7 @@ def draw_fig5():
     # Número de porciones (negrilla solo título)
     tokens_pp += [("Número de porciones por envase:", True), (" ", False), (f"{int(round(servings_per_pack))}", False), (", ", False)]
     # Calorías (bold + valor)
-    tokens_pp += tokens_item("Calorías", f"{fmt_int(kcal_pp)}", bold=True) + [(", ", False)]
+    tokens_pp += tokens_item("Calorías", f"{fmt_int(kcal_pp)}", "kcal", bold=True) + [(", ", False)]
     # Grasa total
     tokens_pp += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_pp_r)}", "g", bold=False) + [(", ", False)]
     # Grasa saturada
