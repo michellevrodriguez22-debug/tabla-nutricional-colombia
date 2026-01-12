@@ -1014,6 +1014,22 @@ def draw_fig5():
     x_content_pp = x + w_main + w_unit + 10
 
     tokens_pp = []
+    
+    tokens_pp += [
+        ("Tamaño de porción:", True),
+        (" ", False),
+        (f"{household_name} ({int(round(portion_size))} {portion_unit})", False),
+        (", ", False)
+    ]
+
+# Número de porciones por envase
+    tokens_pp += [
+        ("Número de porciones por envase:", True),
+        (" ", False),
+        (servings_display, False),
+        (", ", False)
+    ]
+
 # Calorías
     tokens_pp += tokens_item("Calorías", f"{fmt_int(kcal_pp)}", "kcal", bold=True) + [(", ", False)]
 # Grasa total
