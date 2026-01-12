@@ -170,9 +170,33 @@ physical_state = st.sidebar.selectbox("Estado físico", ["Sólido (g)", "Líquid
 portion_unit = "g" if "Sólido" in physical_state else "mL"
 
 st.sidebar.subheader("Porción")
-household_name = st.sidebar.text_input("Medida casera (p. ej. 1 unidad, 1 taza)", value="1 unidad")
-household_mass = as_num(st.sidebar.text_input(f"Equivalencia en {portion_unit} (número)", value="40"))
-servings_per_pack = as_num(st.sidebar.text_input("Número de porciones por envase", value="2"))
+
+household_name = st.sidebar.text_input(
+    "Medida casera (p. ej. 1 unidad, 1 taza)",
+    value="1 unidad"
+)
+
+household_mass = as_num(
+    st.sidebar.text_input(
+        f"Equivalencia en {portion_unit} (número)",
+        value="40"
+    )
+)
+
+st.sidebar.markdown("**Número de porciones por envase**")
+
+servings_value = as_num(
+    st.sidebar.text_input(
+        "Valor numérico (para cálculos)",
+        value=""
+    )
+)
+
+servings_label = st.sidebar.text_input(
+    "Texto a mostrar (solo si aplica, ej. 'aprox. 4')",
+    value=""
+)
+
 
 st.sidebar.subheader("Micronutrientes a declarar")
 vm_options = ["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]
@@ -184,6 +208,20 @@ poly_100 = as_num(st.sidebar.text_input("Polialcoholes (g/100)", value="0")) if 
 
 st.sidebar.subheader("Texto al pie")
 footnote_tail = st.sidebar.text_input("Completa: No es fuente significativa de ...", value="")
+
+# ------------------------------------------------------------
+# Texto final a mostrar para número de porciones
+# ------------------------------------------------------------
+servings_display = (
+    servings_label.strip()
+    if servings_label.strip()
+    else (
+        str(int(round(servings_value)))
+        if servings_value > 0
+        else "0"
+    )
+)
+
 
 # ------------------------------------------------------------
 # ENTRADAS PRINCIPALES (por 100 g/mL)
@@ -681,7 +719,7 @@ def draw_fig1():
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
     d.text((BORDER_W + CELL_PAD_X, y0 + 35),
-           f"Número de porciones por envase: {int(round(servings_per_pack))}",
+           f"Número de porciones por envase: {servings_display}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
     y_header_bottom = BORDER_W + header_h
@@ -814,7 +852,7 @@ def draw_fig3():
            f"Tamaño por porción: {household_name} ({int(round(portion_size))} {portion_unit})",
            fill=TEXT_COLOR, font=FONT_SMALL)
     d.text((BORDER_W + CELL_PAD_X, y0 + 35),
-           f"Número de porciones por envase: {int(round(servings_per_pack))}",
+           f"Número de porciones por envase: {servings_display}",
            fill=TEXT_COLOR, font=FONT_SMALL)
 
     y_header_bottom = BORDER_W + header_h
