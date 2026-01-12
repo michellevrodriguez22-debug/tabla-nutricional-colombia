@@ -922,21 +922,20 @@ def draw_fig5():
         if unit:
             toks.append((" " + unit, bold))
         return toks
-
+        
     tokens_100 = []
     tokens_100 += tokens_item("Calorías", f"{fmt_int(kcal_100)}", "kcal", bold=True) + [(", ", False)]
     tokens_100 += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_100_r)}", "g", bold=False) + [(", ", False)]
     tokens_100 += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_100_r)}", "g", bold=False) + [(", ", False)]
     tokens_100 += tokens_item("Grasas trans", f"{fmt_int(trans_fat_100_mg_r)}", "mg", bold=False) + [(", ", False)]
-    tokens_100 += tokens_item("Sodio", f"{fmt_int(sodium_100_mg_r)}", "mg", bold=True) + [(", ", False)]
     tokens_100 += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_100_r)}", "g", bold=False) + [(", ", False)]
     tokens_100 += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_100_r)}", "g", bold=False) + [(", ", False)]
     if include_poly:
         tokens_100 += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_100_r)}", "g", bold=False) + [(", ", False)]
-        
     tokens_100 += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_100_r)}", "g", bold=False) + [(", ", False)]
     tokens_100 += tokens_item("Azúcares añadidos", f"{fmt_one_decimal(sug_added_100_r)}", "g", bold=True) + [(", ", False)]
     tokens_100 += tokens_item("Proteína", f"{fmt_one_decimal(protein_100_r)}", "g", bold=False) + [(", ", False)]
+    tokens_100 += tokens_item("Sodio", f"{fmt_int(sodium_100_mg_r)}", "mg", bold=True) + [(", ", False)]
 
     # Micronutrientes (mantener formato descriptivo simple, sin negrilla)
     def vm_or_zero(name, unit_key):
@@ -977,33 +976,29 @@ def draw_fig5():
     x_content_pp = x + w_main + w_unit + 10
 
     tokens_pp = []
-    # Tamaño de porción (negrilla solo título)
-    tokens_pp += [("Tamaño de porción:", True), (" ", False), (f"{household_name} ({int(round(portion_size))} {portion_unit})", False), (", ", False)]
-    # Número de porciones (negrilla solo título)
-    tokens_pp += [("Número de porciones por envase:", True), (" ", False), (f"{int(round(servings_per_pack))}", False), (", ", False)]
-    # Calorías (bold + valor)
+# Calorías
     tokens_pp += tokens_item("Calorías", f"{fmt_int(kcal_pp)}", "kcal", bold=True) + [(", ", False)]
-    # Grasa total
+# Grasa total
     tokens_pp += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_pp_r)}", "g", bold=False) + [(", ", False)]
-    # Grasa saturada
+# Grasa saturada
     tokens_pp += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_pp_r)}", "g", bold=False) + [(", ", False)]
-    # Grasas trans
+# Grasas trans
     tokens_pp += tokens_item("Grasas trans", f"{fmt_int(trans_fat_pp_mg_r)}", "mg", bold=False) + [(", ", False)]
-    # Sodio (bold + valor)
-    tokens_pp += tokens_item("Sodio", f"{fmt_int(sodium_pp_mg_r)}", "mg", bold=True) + [(", ", False)]
-    # Carbohidratos totales
+# Carbohidratos
     tokens_pp += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_pp_r)}", "g", bold=False) + [(", ", False)]
-    # Fibra
+# Fibra
     tokens_pp += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_pp_r)}", "g", bold=False) + [(", ", False)]
-    # Polialcoholes
+# Polialcoholes
     if include_poly:
         tokens_pp += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_pp_r)}", "g", bold=False) + [(", ", False)]
-    # Azúcares totales
+# Azúcares totales
     tokens_pp += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_pp_r)}", "g", bold=False) + [(", ", False)]
-    # Azúcares añadidos (bold + valor)
+# Azúcares añadidos
     tokens_pp += tokens_item("Azúcares añadidos", f"{fmt_one_decimal(sug_added_pp_r)}", "g", bold=True) + [(", ", False)]
-    # Proteína
+# Proteína
     tokens_pp += tokens_item("Proteína", f"{fmt_one_decimal(protein_pp_r)}", "g", bold=False) + [(", ", False)]
+# Sodio (al final)
+    tokens_pp += tokens_item("Sodio", f"{fmt_int(sodium_pp_mg_r)}", "mg", bold=True) + [(", ", False)]
 
     # Micros por porción (sin negrilla)
     micro_pp_texts = [
