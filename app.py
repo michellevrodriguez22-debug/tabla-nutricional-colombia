@@ -235,6 +235,8 @@ vm_options = [
     "Zinc",
 
     # Micronutrientes voluntarios
+    "Vitamina C",
+    "Vitamina B1",
     "Vitamina E",
     "Fósforo",
     "Vitamina K",
