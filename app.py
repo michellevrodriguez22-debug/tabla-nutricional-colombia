@@ -281,33 +281,63 @@ st.header("Ingreso de datos por 100 g / 100 mL")
 c1, c2, c3 = st.columns([0.33, 0.33, 0.34])
 with c1:
     st.subheader("Macronutrientes (por 100)")
-    fat_total_100    = as_num(st.text_input("Grasa total (g/100)", value="13"))
-    sat_fat_100      = as_num(st.text_input("Grasa saturada (g/100)", value="6"))
-    trans_fat_100_mg = as_num(st.text_input("Grasas trans (mg/100)", value="820"))
-    
+
+    if "Grasa total" in selected_macros:
+        fat_total_100 = as_num(st.text_input("Grasa total (g/100)", value="13"))
+    else:
+        fat_total_100 = 0.0
+
+    if "Grasa saturada" in selected_macros:
+        sat_fat_100 = as_num(st.text_input("Grasa saturada (g/100)", value="6"))
+    else:
+        sat_fat_100 = 0.0
+
+    if "Grasas trans" in selected_macros:
+        trans_fat_100_mg = as_num(st.text_input("Grasas trans (mg/100)", value="820"))
+    else:
+        trans_fat_100_mg = 0.0
+
     if "Grasa monoinsaturada" in selected_optional_fats:
-        mono_fat_100 = as_num(
-            st.text_input("Grasa monoinsaturada (g/100)", value="0")
-        )
+        mono_fat_100 = as_num(st.text_input("Grasa monoinsaturada (g/100)", value="0"))
     else:
         mono_fat_100 = 0.0
 
     if "Grasa poliinsaturada" in selected_optional_fats:
-        poly_fat_100 = as_num(
-            st.text_input("Grasa poliinsaturada (g/100)", value="0")
-        )
+        poly_fat_100 = as_num(st.text_input("Grasa poliinsaturada (g/100)", value="0"))
     else:
         poly_fat_100 = 0.0
-
     
 with c2:
-    carb_100       = as_num(st.text_input("Carbohidratos totales (g/100)", value="31"))
-    sug_total_100  = as_num(st.text_input("Azúcares totales (g/100)", value="5"))
-    sug_added_100  = as_num(st.text_input("Azúcares añadidos (g/100)", value="2"))
+    if "Carbohidratos totales" in selected_macros:
+        carb_100 = as_num(st.text_input("Carbohidratos totales (g/100)", value="31"))
+    else:
+        carb_100 = 0.0
+
+    if "Azúcares totales" in selected_macros:
+        sug_total_100 = as_num(st.text_input("Azúcares totales (g/100)", value="5"))
+    else:
+        sug_total_100 = 0.0
+
+    if "Azúcares añadidos" in selected_macros:
+        sug_added_100 = as_num(st.text_input("Azúcares añadidos (g/100)", value="2"))
+    else:
+        sug_added_100 = 0.0
+        
 with c3:
-    fiber_100      = as_num(st.text_input("Fibra dietaria (g/100)", value="0.8"))
-    protein_100    = as_num(st.text_input("Proteína (g/100)", value="5"))
-    sodium_100_mg  = as_num(st.text_input("Sodio (mg/100)", value="560"))
+    if "Fibra dietaria" in selected_macros:
+        fiber_100 = as_num(st.text_input("Fibra dietaria (g/100)", value="0.8"))
+    else:
+        fiber_100 = 0.0
+
+    if "Proteína" in selected_macros:
+        protein_100 = as_num(st.text_input("Proteína (g/100)", value="5"))
+    else:
+        protein_100 = 0.0
+
+    if "Sodio" in selected_macros:
+        sodium_100_mg = as_num(st.text_input("Sodio (mg/100)", value="560"))
+    else:
+        sodium_100_mg = 0.0
 
 st.markdown("---")
 st.subheader("Valores de micronutrientes seleccionados (por 100)")
