@@ -1278,7 +1278,7 @@ def draw_fig5():
 
     # Pie multilínea (regular)
     if footnote_text.strip():
-        base_text = f"No es fuente significativa de {footnote_text.strip().rstrip('.')}"
+        base_text = footnote_text.strip().rstrip('.')
         words = base_text.split(" ")
         foot_tokens = []
         for i, w in enumerate(words):
