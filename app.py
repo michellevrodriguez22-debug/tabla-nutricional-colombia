@@ -1160,16 +1160,35 @@ def draw_fig5():
         
     tokens_100 = []
     tokens_100 += tokens_item("Calorías", f"{fmt_int(kcal_100)}", "kcal", bold=True) + [(", ", False)]
-    tokens_100 += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_100_r)}", "g", bold=False) + [(", ", False)]
-    tokens_100 += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_100_r)}", "g", bold=False) + [(", ", False)]
-    tokens_100 += tokens_item("Grasas trans", f"{fmt_int(trans_fat_100_mg_r)}", "mg", bold=False) + [(", ", False)]
-    tokens_100 += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_100_r)}", "g", bold=False) + [(", ", False)]
-    tokens_100 += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_100_r)}", "g", bold=False) + [(", ", False)]
+    
+    if "Grasa total" in selected_macros:
+    tokens_100 += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_100_r)}", "g") + [(", ", False)]
+    
+    if "Grasa saturada" in selected_macros:
+    tokens_100 += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_100_r)}", "g") + [(", ", False)]
+    
+    if "Grasas trans" in selected_macros:
+    tokens_100 += tokens_item("Grasas trans", f"{fmt_int(trans_fat_100_mg_r)}", "mg") + [(", ", False)]
+    
+    if "Carbohidratos totales" in selected_macros:
+    tokens_100 += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_100_r)}", "g") + [(", ", False)]
+    
+    if "Fibra dietaria" in selected_macros:
+    tokens_100 += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_100_r)}", "g") + [(", ", False)]
+    
     if include_poly:
-        tokens_100 += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_100_r)}", "g", bold=False) + [(", ", False)]
-    tokens_100 += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_100_r)}", "g", bold=False) + [(", ", False)]
+    tokens_100 += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_100_r)}", "g") + [(", ", False)]
+    
+    if "Azúcares totales" in selected_macros:
+    tokens_100 += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_100_r)}", "g") + [(", ", False)]
+    
+    if "Azúcares añadidos" in selected_macros:
     tokens_100 += tokens_item("Azúcares añadidos", f"{fmt_one_decimal(sug_added_100_r)}", "g", bold=True) + [(", ", False)]
-    tokens_100 += tokens_item("Proteína", f"{fmt_one_decimal(protein_100_r)}", "g", bold=False) + [(", ", False)]
+    
+    if "Proteína" in selected_macros:
+    tokens_100 += tokens_item("Proteína", f"{fmt_one_decimal(protein_100_r)}", "g") + [(", ", False)]
+    
+    if "Sodio" in selected_macros:
     tokens_100 += tokens_item("Sodio", f"{fmt_int(sodium_100_mg_r)}", "mg", bold=True) + [(", ", False)]
 
     # Micronutrientes (mantener formato descriptivo simple, sin negrilla)
