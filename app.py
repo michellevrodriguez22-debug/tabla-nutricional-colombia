@@ -501,10 +501,10 @@ def compute_cols_vertical(draw, labels_with_indent, v100_list, vpp_list, W):
 def common_rows():
     rows = []
     if "Grasa total" in selected_macros:
-    rows.append(("Grasa total",
-        f"{fmt_art9(fat_total_100_r)} g",
-        f"{fmt_art9(fat_total_pp_r)} g",
-        0, False, False))
+        rows.append(("Grasa total",
+            f"{fmt_art9(fat_total_100_r)} g",
+            f"{fmt_art9(fat_total_pp_r)} g",
+            0, False, False))
 
     if "Grasa monoinsaturada" in selected_optional_fats:
         rows.append(("Grasa monoinsaturada",
