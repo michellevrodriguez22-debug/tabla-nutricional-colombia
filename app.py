@@ -199,8 +199,40 @@ servings_label = st.sidebar.text_input(
 
 
 st.sidebar.subheader("Micronutrientes a declarar")
-vm_options = ["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]
-selected_vm = st.sidebar.multiselect("Selecciona los que declararás", vm_options, default=["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"])
+vm_options = [
+    # Micronutrientes base
+    "Vitamina A",
+    "Vitamina D",
+    "Hierro",
+    "Calcio",
+    "Zinc",
+
+    # Micronutrientes voluntarios
+    "Vitamina E",
+    "Fósforo",
+    "Vitamina K",
+    "Yodo",
+    "Magnesio",
+    "Niacina",
+    "Ácido pantoténico",
+    "Selenio",
+    "Vitamina B6",
+    "Cobre",
+    "Riboflavina",
+    "Manganeso",
+    "Tiamina",
+    "Cromo",
+    "Folato",
+    "Molibdeno",
+    "Biotina",
+    "Cloruro",
+    "Vitamina B12"
+]
+selected_vm = st.sidebar.multiselect(
+    "Selecciona los que declararás",
+    vm_options,
+    default=["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]
+)
 
 st.sidebar.subheader("Macronutrientes a declarar")
 macro_order = [
@@ -234,16 +266,24 @@ selected_optional_fats = st.sidebar.multiselect(
 # Construcción automática del texto
 # "No es fuente significativa de ..."
 # ------------------------------------------------------------
-
 micro_order = ["Vitamina A", "Vitamina D", "Hierro", "Calcio", "Zinc"]
+
+mandatory_micros = [
+    "Vitamina A",
+    "Vitamina D",
+    "Hierro",
+    "Calcio",
+    "Zinc"
+]
 
 macros_not_declared = [
     m for m in macro_order if m not in selected_macros
 ]
 
 micros_not_declared = [
-    m for m in micro_order if m not in selected_vm
+    m for m in mandatory_micros if m not in selected_vm
 ]
+
 
 footnote_items = macros_not_declared + micros_not_declared
 
