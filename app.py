@@ -221,6 +221,38 @@ selected_macros = st.sidebar.multiselect(
     default=macro_order
 )
 
+st.sidebar.subheader("Grasas opcionales")
+
+selected_optional_fats = st.sidebar.multiselect(
+    "Selecciona las grasas que deseas declarar",
+    ["Grasa monoinsaturada", "Grasa poliinsaturada"],
+    default=[]
+)
+
+
+# ------------------------------------------------------------
+# Construcción automática del texto
+# "No es fuente significativa de ..."
+# ------------------------------------------------------------
+
+micro_order = ["Vitamina A", "Vitamina D", "Hierro", "Calcio", "Zinc"]
+
+macros_not_declared = [
+    m for m in macro_order if m not in selected_macros
+]
+
+micros_not_declared = [
+    m for m in micro_order if m not in selected_vm
+]
+
+footnote_items = macros_not_declared + micros_not_declared
+
+footnote_text = (
+    "No es fuente significativa de " + ", ".join(footnote_items)
+    if footnote_items else ""
+)
+
+
 
 st.sidebar.subheader("Polialcoholes")
 include_poly = st.sidebar.checkbox("Incluir polialcoholes", value=False)
@@ -252,6 +284,22 @@ with c1:
     fat_total_100    = as_num(st.text_input("Grasa total (g/100)", value="13"))
     sat_fat_100      = as_num(st.text_input("Grasa saturada (g/100)", value="6"))
     trans_fat_100_mg = as_num(st.text_input("Grasas trans (mg/100)", value="820"))
+    
+    if "Grasa monoinsaturada" in selected_optional_fats:
+        mono_fat_100 = as_num(
+            st.text_input("Grasa monoinsaturada (g/100)", value="0")
+        )
+    else:
+        mono_fat_100 = 0.0
+
+    if "Grasa poliinsaturada" in selected_optional_fats:
+        poly_fat_100 = as_num(
+            st.text_input("Grasa poliinsaturada (g/100)", value="0")
+        )
+    else:
+        poly_fat_100 = 0.0
+
+    
 with c2:
     carb_100       = as_num(st.text_input("Carbohidratos totales (g/100)", value="31"))
     sug_total_100  = as_num(st.text_input("Azúcares totales (g/100)", value="5"))
@@ -292,7 +340,8 @@ sug_added_pp    = portion_from_per100(sug_added_100, portion_size)
 fiber_pp        = portion_from_per100(fiber_100, portion_size)
 protein_pp      = portion_from_per100(protein_100, portion_size)
 sodium_pp_mg    = portion_from_per100(sodium_100_mg, portion_size)
-poly_pp         = portion_from_per100(poly_100, portion_size) if include_poly else 0.0
+mono_fat_pp = portion_from_per100(mono_fat_100, portion_size)
+poly_fat_pp = portion_from_per100(poly_fat_100, portion_size)
 
 # Energía (antes de redondear)
 kcal_100_raw = kcal_from_macros(fat_total_100, carb_100, protein_100)
@@ -330,7 +379,8 @@ sug_added_100_r     = round_g(sug_added_100)
 fiber_100_r         = round_g(fiber_100)
 protein_100_r       = round_g(protein_100)
 sodium_100_mg_r     = round_mg(sodium_100_mg)
-poly_100_r          = round_g(poly_100) if include_poly else 0.0
+mono_fat_100_r = round_g(mono_fat_100)
+poly_fat_100_r = round_g(poly_fat_100)
 _trans_g_100        = (trans_fat_100_mg or 0.0)/1000.0
 _trans_g_100        = nonsig_zero_g("Grasas trans", _trans_g_100)
 trans_fat_100_mg_r  = round_mg(_trans_g_100 * 1000.0)
@@ -344,7 +394,8 @@ sug_added_pp_r     = round_g(sug_added_pp)
 fiber_pp_r         = round_g(fiber_pp)
 protein_pp_r       = round_g(protein_pp)
 sodium_pp_mg_r     = round_mg(sodium_pp_mg)
-poly_pp_r          = round_g(poly_pp) if include_poly else 0.0
+mono_fat_pp_r = round_g(mono_fat_pp)
+poly_fat_pp_r = round_g(poly_fat_pp)
 # PARA GRASAS TRANS POR PORCIÓN: NO APLICAR CRITERIO DE "NO SIGNIFICATIVO"
 _trans_g_pp        = (trans_fat_pp_mg or 0.0)/1000.0
 # ELIMINAR ESTA LÍNEA: _trans_g_pp = nonsig_zero_g("Grasas trans", _trans_g_pp)
@@ -450,10 +501,22 @@ def compute_cols_vertical(draw, labels_with_indent, v100_list, vpp_list, W):
 def common_rows():
     rows = []
     if "Grasa total" in selected_macros:
-        rows.append(("Grasa total",
-            f"{fmt_art9(fat_total_100_r)} g",
-            f"{fmt_art9(fat_total_pp_r)} g",
-            0, False, False))
+    rows.append(("Grasa total",
+        f"{fmt_art9(fat_total_100_r)} g",
+        f"{fmt_art9(fat_total_pp_r)} g",
+        0, False, False))
+
+    if "Grasa monoinsaturada" in selected_optional_fats:
+        rows.append(("Grasa monoinsaturada",
+            f"{fmt_art9(mono_fat_100_r)} g",
+            f"{fmt_art9(mono_fat_pp_r)} g",
+            1, False, False))
+
+    if "Grasa poliinsaturada" in selected_optional_fats:
+        rows.append(("Grasa poliinsaturada",
+            f"{fmt_art9(poly_fat_100_r)} g",
+            f"{fmt_art9(poly_fat_pp_r)} g",
+            1, False, False))
 
     if "Grasa saturada" in selected_macros:
         rows.append(("Grasa saturada",
@@ -838,8 +901,8 @@ def draw_fig1():
     draw_vline(d, col_x[2] + GRID_W//2, y_header_bottom, y, TEXT_COLOR, GRID_W)
 
     # Pie multilínea
-    if footnote_tail.strip():
-        base_text = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
+    if footnote_text:
+        base_text = footnote_text
         max_line_width = W - 2*BORDER_W - 2*CELL_PAD_X
         words = base_text.split(' ')
         lines, current_line = [], []
@@ -949,8 +1012,8 @@ def draw_fig3():
     draw_vline(d, col_x[2] + GRID_W//2, y_header_bottom, y, TEXT_COLOR, GRID_W)
 
     # Pie multilínea
-    if footnote_tail.strip():
-        base_text = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
+    if footnote_text:
+        base_text = footnote_text
         max_line_width = W - 2*BORDER_W - 2*CELL_PAD_X
         words = base_text.split(' ')
         lines, current_line = [], []
