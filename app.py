@@ -1194,16 +1194,12 @@ def draw_fig5():
     # Micronutrientes (mantener formato descriptivo simple, sin negrilla)
     def vm_or_zero(name, unit_key):
         return fmt_micro_value(name, unit_key, vm_values_rounded.get((name, unit_key), 0))
-    micro_texts = [
-        f"Vitamina A {vm_or_zero('Vitamina A','µg ER')}",
-        f"Vitamina D {vm_or_zero('Vitamina D','µg')}",
-        f"Hierro {vm_or_zero('Hierro','mg')}",
-        f"Calcio {vm_or_zero('Calcio','mg')}",
-        f"Zinc {vm_or_zero('Zinc','mg')}"
-    ]
-    for i, mt in enumerate(micro_texts):
-        tokens_100 += [(mt, False)]
-        tokens_100 += [(", ", False)] if i < len(micro_texts)-1 else [(".", False)]
+    for name in ["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]:
+        if name in selected_vm:
+            unit = "µg ER" if name == "Vitamina A" else ("µg" if name == "Vitamina D" else "mg")
+            value = vm_values_rounded.get((name, unit), 0)
+            tokens_100 += [(f"{name} {fmt_micro_value(name, unit, value)}", False), (", ", False)]
+
 
     # Render envuelto
     y = draw_rich_wrapped_text(
@@ -1248,36 +1244,62 @@ def draw_fig5():
 
 # Calorías
     tokens_pp += tokens_item("Calorías", f"{fmt_int(kcal_pp)}", "kcal", bold=True) + [(", ", False)]
+    
 # Grasa total
-    tokens_pp += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_pp_r)}", "g", bold=False) + [(", ", False)]
+if "Grasa total" in selected_macros:
+    tokens_pp += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_pp_r)}", "g") + [(", ", False)]
+
 # Grasa saturada
-    tokens_pp += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_pp_r)}", "g", bold=False) + [(", ", False)]
+if "Grasa saturada" in selected_macros:
+    tokens_pp += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_pp_r)}", "g") + [(", ", False)]
+
 # Grasas trans
-    tokens_pp += tokens_item("Grasas trans", f"{fmt_int(trans_fat_pp_mg_r)}", "mg", bold=False) + [(", ", False)]
+if "Grasas trans" in selected_macros:
+    tokens_pp += tokens_item("Grasas trans", f"{fmt_int(trans_fat_pp_mg_r)}", "mg") + [(", ", False)]
+
 # Carbohidratos
-    tokens_pp += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_pp_r)}", "g", bold=False) + [(", ", False)]
+if "Carbohidratos totales" in selected_macros:
+    tokens_pp += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_pp_r)}", "g") + [(", ", False)]
+
 # Fibra
-    tokens_pp += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_pp_r)}", "g", bold=False) + [(", ", False)]
+if "Fibra dietaria" in selected_macros:
+    tokens_pp += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_pp_r)}", "g") + [(", ", False)]
+
 # Polialcoholes
-    if include_poly:
-        tokens_pp += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_pp_r)}", "g", bold=False) + [(", ", False)]
+if include_poly:
+    tokens_pp += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_pp_r)}", "g") + [(", ", False)]
+
 # Azúcares totales
-    tokens_pp += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_pp_r)}", "g", bold=False) + [(", ", False)]
+if "Azúcares totales" in selected_macros:
+    tokens_pp += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_pp_r)}", "g") + [(", ", False)]
+
 # Azúcares añadidos
+if "Azúcares añadidos" in selected_macros:
     tokens_pp += tokens_item("Azúcares añadidos", f"{fmt_one_decimal(sug_added_pp_r)}", "g", bold=True) + [(", ", False)]
+
 # Proteína
-    tokens_pp += tokens_item("Proteína", f"{fmt_one_decimal(protein_pp_r)}", "g", bold=False) + [(", ", False)]
-# Sodio (al final)
+if "Proteína" in selected_macros:
+    tokens_pp += tokens_item("Proteína", f"{fmt_one_decimal(protein_pp_r)}", "g") + [(", ", False)]
+
+# Sodio
+if "Sodio" in selected_macros:
     tokens_pp += tokens_item("Sodio", f"{fmt_int(sodium_pp_mg_r)}", "mg", bold=True) + [(", ", False)]
 
-    # Micros por porción (sin negrilla)
-    micro_pp_texts = [
-        f"Vitamina A {fmt_micro_value('Vitamina A','µg ER',vm_pp.get(('Vitamina A','µg ER'),0))}",
-        f"Vitamina D {fmt_micro_value('Vitamina D','µg',vm_pp.get(('Vitamina D','µg'),0))}",
-        f"Hierro {fmt_micro_value('Hierro','mg',vm_pp.get(('Hierro','mg'),0))}",
-        f"Calcio {fmt_micro_value('Calcio','mg',vm_pp.get(('Calcio','mg'),0))}",
-        f"Zinc {fmt_micro_value('Zinc','mg',vm_pp.get(('Zinc','mg'),0))}"
-    ]
+    # Micronutrientes obligatorios POR PORCIÓN
+    for name in ["Vitamina A", "Vitamina D", "Hierro", "Calcio", "Zinc"]:
+        if name in selected_vm:
+            unit = (
+                "µg ER" if name == "Vitamina A"
+                else "µg" if name == "Vitamina D"
+                else "mg"
+            )
+            value = vm_pp.get((name, unit), 0)
+            
+            tokens_pp += [
+                (f"{name} {fmt_micro_value(name, unit, value)}", False),
+                (", ", False)
+            ]
+
     for i, mt in enumerate(micro_pp_texts):
         tokens_pp += [(mt, False)]
         tokens_pp += [(", ", False)] if i < len(micro_pp_texts)-1 else [(".", False)]
