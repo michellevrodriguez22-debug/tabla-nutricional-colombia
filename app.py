@@ -1162,7 +1162,12 @@ def draw_fig5():
     tokens_100 += tokens_item("Calorías", f"{fmt_int(kcal_100)}", "kcal", bold=True) + [(", ", False)]
     
     if "Grasa total" in selected_macros:
-    tokens_100 += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_100_r)}", "g") + [(", ", False)]
+        tokens_100 += tokens_item(
+            "Grasa total",
+            f"{fmt_one_decimal(fat_total_100_r)}",
+            "g"
+        ) + [(", ", False)]
+
     
     if "Grasa saturada" in selected_macros:
     tokens_100 += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_100_r)}", "g") + [(", ", False)]
