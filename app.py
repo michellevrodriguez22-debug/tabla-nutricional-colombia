@@ -202,12 +202,30 @@ st.sidebar.subheader("Micronutrientes a declarar")
 vm_options = ["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]
 selected_vm = st.sidebar.multiselect("Selecciona los que declararás", vm_options, default=["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"])
 
+st.sidebar.subheader("Macronutrientes a declarar")
+macro_order = [
+    "Grasa total",
+    "Grasa saturada",
+    "Grasas trans",
+    "Carbohidratos totales",
+    "Fibra dietaria",
+    "Azúcares totales",
+    "Azúcares añadidos",
+    "Proteína",
+    "Sodio",
+]
+
+selected_macros = st.sidebar.multiselect(
+    "Selecciona los macronutrientes que se declararán en la tabla",
+    macro_order,
+    default=macro_order
+)
+
+
 st.sidebar.subheader("Polialcoholes")
 include_poly = st.sidebar.checkbox("Incluir polialcoholes", value=False)
 poly_100 = as_num(st.sidebar.text_input("Polialcoholes (g/100)", value="0")) if include_poly else 0.0
 
-st.sidebar.subheader("Texto al pie")
-footnote_tail = st.sidebar.text_input("Completa: No es fuente significativa de ...", value="")
 
 # ------------------------------------------------------------
 # Texto final a mostrar para número de porciones
@@ -430,26 +448,61 @@ def compute_cols_vertical(draw, labels_with_indent, v100_list, vpp_list, W):
 # FILAS
 # ------------------------------------------------------------
 def common_rows():
-    rows = [
-        ("Grasa total",            f"{fmt_art9(fat_total_100_r)} g",     f"{fmt_art9(fat_total_pp_r)} g",       0, False, False),
-        ("Grasa saturada",       f"{fmt_art9(sat_fat_100_r)} g", f"{fmt_art9(sat_fat_pp_r)} g", 1, True, False),
-        ("Grasas trans",         f"{fmt_art9(trans_fat_100_mg_r)} mg", f"{fmt_art9(trans_fat_pp_mg_r)} mg", 1, True, False),
-        ("Carbohidratos totales",  f"{fmt_art9(carb_100_r)} g",           f"{fmt_art9(carb_pp_r)} g",             0, False, False),
-        ("Fibra dietaria",       f"{fmt_art9(fiber_100_r)} g",         f"{fmt_art9(fiber_pp_r)} g",           1, False, False),
-        ("Azúcares totales",     f"{fmt_art9(sug_total_100_r)} g",
-                            f"{fmt_art9(sug_total_pp_r)} g", 1, False, False),
-        ("Azúcares añadidos",  f"{fmt_art9(sug_added_100_r)} g",
-                            f"{fmt_art9(sug_added_pp_r)} g", 2, True, False),
-        ("Proteína",               f"{fmt_art9(protein_100_r)} g",       f"{fmt_art9(protein_pp_r)} g",         0, False, False),
-        ("Sodio",                  f"{fmt_art9(sodium_100_mg_r)} mg",            f"{fmt_art9(sodium_pp_mg_r)} mg",              0, True,  False),
-    ]
-    if include_poly:
-        # Insertarlo después de Fibra y antes de Azúcares totales
-        try:
-            idx_azuc_tot = next(i for i, r in enumerate(rows) if r[0].strip() == "Azúcares totales")
-            rows.insert(idx_azuc_tot, ("  Polialcoholes", f"{fmt_art9(poly_100_r)} g", f"{fmt_art9(poly_pp_r)} g", 1, False, False))
-        except StopIteration:
-            pass
+    rows = []
+    if "Grasa total" in selected_macros:
+        rows.append(("Grasa total",
+            f"{fmt_art9(fat_total_100_r)} g",
+            f"{fmt_art9(fat_total_pp_r)} g",
+            0, False, False))
+
+    if "Grasa saturada" in selected_macros:
+        rows.append(("Grasa saturada",
+            f"{fmt_art9(sat_fat_100_r)} g",
+            f"{fmt_art9(sat_fat_pp_r)} g",
+            1, True, False))
+
+    if "Grasas trans" in selected_macros:
+        rows.append(("Grasas trans",
+            f"{fmt_art9(trans_fat_100_mg_r)} mg",
+            f"{fmt_art9(trans_fat_pp_mg_r)} mg",
+            1, True, False))
+
+    if "Carbohidratos totales" in selected_macros:
+        rows.append(("Carbohidratos totales",
+            f"{fmt_art9(carb_100_r)} g",
+            f"{fmt_art9(carb_pp_r)} g",
+            0, False, False))
+
+    if "Fibra dietaria" in selected_macros:
+        rows.append(("Fibra dietaria",
+            f"{fmt_art9(fiber_100_r)} g",
+            f"{fmt_art9(fiber_pp_r)} g",
+            1, False, False))
+
+    if "Azúcares totales" in selected_macros:
+        rows.append(("Azúcares totales",
+            f"{fmt_art9(sug_total_100_r)} g",
+            f"{fmt_art9(sug_total_pp_r)} g",
+            1, False, False))
+
+    if "Azúcares añadidos" in selected_macros:
+        rows.append(("Azúcares añadidos",
+            f"{fmt_art9(sug_added_100_r)} g",
+            f"{fmt_art9(sug_added_pp_r)} g",
+            2, True, False))
+
+    if "Proteína" in selected_macros:
+        rows.append(("Proteína",
+            f"{fmt_art9(protein_100_r)} g",
+            f"{fmt_art9(protein_pp_r)} g",
+            0, False, False))
+
+    if "Sodio" in selected_macros:
+        rows.append(("Sodio",
+            f"{fmt_art9(sodium_100_mg_r)} mg",
+            f"{fmt_art9(sodium_pp_mg_r)} mg",
+            0, True, False))
+
     return rows
 
 def micro_rows():
