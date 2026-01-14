@@ -792,7 +792,7 @@ def draw_fig1():
     W = 580
     header_h = 165
     gap_after_title = 5
-    foot_h = 90 if footnote_tail.strip() else 20
+    foot_h = 90 if footnote_text.strip() else 20
 
     body_rows_h = len(rows_nutri)*ROW_H + (len(rows_micro)*ROW_H_MICRO if show_micro else 0)
 
@@ -936,7 +936,7 @@ def draw_fig3():
     W = 580
     header_h = 165
     gap_after_title = 5
-    foot_h = 90 if footnote_tail.strip() else 20
+    foot_h = 90 if footnote_text.strip() else 20
     body_rows_h = len(rows_nutri)*ROW_H
 
     H_temp = 100
@@ -1196,8 +1196,8 @@ def draw_fig5():
 
 
     # Pie multilínea (regular)
-    if footnote_tail.strip():
-        base_text = f"No es fuente significativa de {footnote_tail.strip().rstrip('.')}"
+    if footnote_text.strip():
+        base_text = f"No es fuente significativa de {footnote_text.strip().rstrip('.')}"
         words = base_text.split(" ")
         foot_tokens = []
         for i, w in enumerate(words):
