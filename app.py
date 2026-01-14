@@ -639,14 +639,23 @@ def common_rows():
     return rows
 
 def micro_rows():
-    order = ["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]
-    selected = [(n,u) for (n,u) in vm_values_rounded.keys()]
+    mandatory = ["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]
+
+    # Orden final:
+    # 1) obligatorios (en orden fijo)
+    # 2) voluntarios (en el orden en que el usuario los seleccionó)
     ordered = []
 
-    for name in order:
-        for (n,u) in selected:
-            if n == name:
-                ordered.append((n,u))
+    # obligatorios
+    for m in mandatory:
+        for (n, u) in vm_values_rounded.keys():
+            if n == m:
+                ordered.append((n, u))
+
+    # voluntarios
+    for (n, u) in vm_values_rounded.keys():
+        if n not in mandatory:
+            ordered.append((n, u))
 
     rows = []
     for (name, unit) in ordered:
@@ -654,11 +663,11 @@ def micro_rows():
         vpp  = vm_pp[(name, unit)]
 
         rows.append((
-    name,
-    f"{fmt_art9(v100, is_micro=True)} {unit}",
-    f"{fmt_art9(vpp,  is_micro=True)} {unit}",
-    0, False, True
-))
+            name,
+            f"{fmt_art9(v100, is_micro=True)} {unit}",
+            f"{fmt_art9(vpp,  is_micro=True)} {unit}",
+            0, False, True
+        ))
 
     return rows
 
