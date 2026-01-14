@@ -1277,6 +1277,14 @@ def draw_fig5():
 
 
     # Pie multilínea (regular)
+    if footnote_text.strip():
+        base_text = f"No es fuente significativa de {footnote_text.strip().rstrip('.')}"
+        words = base_text.split(" ")
+        foot_tokens = []
+        for i, w in enumerate(words):
+            foot_tokens.append((w + (" " if i < len(words)-1 else ""), False))
+        y += line_space
+        y = draw_rich_wrapped_text(d, x, y, foot_tokens, FONT_SMALL, FONT_SMALL_B, max_line_width, line_gap=4)
         
     H_final = int(y + BORDER_W + 10)
     img = img.crop((0, 0, W, H_final))
@@ -1308,4 +1316,4 @@ if export_btn:
     img_prev.save(buf, format="PNG")
     buf.seek(0)
     fname = f"tabla_nutricional_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-    st.download_button("Descargar PNG", data=buf, file_name=fname, mime="image/png")
+    st.download_button("Descargar PNG", data=buf, file_name=fname, mime="image/png") 
