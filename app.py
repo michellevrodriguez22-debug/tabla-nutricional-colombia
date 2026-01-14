@@ -198,6 +198,33 @@ servings_label = st.sidebar.text_input(
 )
 
 
+st.sidebar.subheader("Macronutrientes a declarar")
+macro_order = [
+    "Grasa total",
+    "Grasa saturada",
+    "Grasas trans",
+    "Carbohidratos totales",
+    "Fibra dietaria",
+    "Azúcares totales",
+    "Azúcares añadidos",
+    "Proteína",
+    "Sodio",
+]
+
+selected_macros = st.sidebar.multiselect(
+    "Selecciona los macronutrientes que se declararán en la tabla",
+    macro_order,
+    default=macro_order
+)
+
+st.sidebar.subheader("Grasas opcionales")
+
+selected_optional_fats = st.sidebar.multiselect(
+    "Selecciona las grasas que deseas declarar",
+    ["Grasa monoinsaturada", "Grasa poliinsaturada"],
+    default=[]
+)
+
 st.sidebar.subheader("Micronutrientes a declarar")
 vm_options = [
     # Micronutrientes base
@@ -232,33 +259,6 @@ selected_vm = st.sidebar.multiselect(
     "Selecciona los que declararás",
     vm_options,
     default=["Vitamina A","Vitamina D","Hierro","Calcio","Zinc"]
-)
-
-st.sidebar.subheader("Macronutrientes a declarar")
-macro_order = [
-    "Grasa total",
-    "Grasa saturada",
-    "Grasas trans",
-    "Carbohidratos totales",
-    "Fibra dietaria",
-    "Azúcares totales",
-    "Azúcares añadidos",
-    "Proteína",
-    "Sodio",
-]
-
-selected_macros = st.sidebar.multiselect(
-    "Selecciona los macronutrientes que se declararán en la tabla",
-    macro_order,
-    default=macro_order
-)
-
-st.sidebar.subheader("Grasas opcionales")
-
-selected_optional_fats = st.sidebar.multiselect(
-    "Selecciona las grasas que deseas declarar",
-    ["Grasa monoinsaturada", "Grasa poliinsaturada"],
-    default=[]
 )
 
 
