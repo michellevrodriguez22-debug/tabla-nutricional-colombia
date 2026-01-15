@@ -74,6 +74,11 @@ def round_kcal(v):
     if v <= 4:
         return 0
 
+def fmt_kcal(v):
+    if v == 0:
+        return "0"
+    return f"{v:.1f}".rstrip("0").rstrip(".")
+
     # No aproximar, no redondear
     return v
 
@@ -936,17 +941,18 @@ def draw_fig1():
 
     y_header_bottom = BORDER_W + header_h
     draw_hline(d, BORDER_W, W-BORDER_W, y_header_bottom, TEXT_COLOR, GRID_W_THICK)
-
-
-def fmt_kcal(v):
-    if v == 0:
-        return "0"
-        return f"{v:.1f}".rstrip("0").rstrip(".")
-
-kcal_100_txt = fmt_kcal(kcal_100)
-kcal_pp_txt  = fmt_kcal(kcal_pp)
-
-    y = draw_calories_combined_row(d, W, y_header_bottom+1, col_x, kcal_100_txt, kcal_pp_txt)
+    
+    kcal_100_txt = fmt_kcal(kcal_100)
+    kcal_pp_txt  = fmt_kcal(kcal_pp)
+    
+    y = draw_calories_combined_row(
+        d,
+        W,
+        y_header_bottom + 1,
+        col_x,
+        kcal_100_txt,
+        kcal_pp_txt
+    )
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
 
