@@ -738,20 +738,6 @@ def draw_calories_combined_row(d, W, y, col_x, kcal_100_txt, kcal_pp_txt):
 # Helper: renderizado rich text con negrilla parcial + salto de línea
 # ------------------------------------------------------------
 
-def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap=4, first_line_x=None):
-    lines = []
-    current = []
-
-    def measure_tokens(tokens_list, is_first_line=False):
-        w_total = 0
-        for t, b in tokens_list:
-            w, _ = measure_text(d, t, font_bold if b else font_reg)
-            w_total += w
-
-        if is_first_line and first_line_x is not None:
-            w_total += (first_line_x - x)
-
-        return w_total
 
     # Construcción de líneas
     for t, b in tokens:
@@ -817,7 +803,13 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
     def measure_tokens(tokens_list, is_first_line=False):
         w_total = 0
         for t, b in tokens_list:
-            w, _ = measure_text(d, t, font_bold if b else font_reg)
+            if b == "emph":
+                f = FONT_SMALL_EMPH_B
+            elif b == "bold":
+                f = FONT_SMALL_B
+            else:
+                f = FONT_SMALL
+            w, _ = measure_text(d, t, f)
             w_total += w
 
         if is_first_line and first_line_x is not None:
@@ -847,14 +839,20 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
     for i, line in enumerate(lines):
         cx = first_line_x if (i == 0 and first_line_x is not None) else x
         for t, b in line:
-            f = font_bold if b else font_reg
+            if b == "emph":
+                f = FONT_SMALL_EMPH_B      # 👈 1.3x
+            elif b == "bold":
+                f = FONT_SMALL_B
+            else:
+                f = FONT_SMALL
+
             d.text((cx, y), t, fill=TEXT_COLOR, font=f)
             w, _ = measure_text(d, t, f)
             cx += w
-        y += font_reg.size + line_gap
+
+        y += FONT_SMALL.size + line_gap
 
     return y
-
 
 
     # Construcción de líneas
