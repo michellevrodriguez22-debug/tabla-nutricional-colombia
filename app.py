@@ -1246,44 +1246,44 @@ def draw_fig5():
     tokens_pp += tokens_item("Calorías", f"{fmt_int(kcal_pp)}", "kcal", bold=True) + [(", ", False)]
     
 # Grasa total
-if "Grasa total" in selected_macros:
-    tokens_pp += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_pp_r)}", "g") + [(", ", False)]
+    if "Grasa total" in selected_macros:
+        tokens_pp += tokens_item("Grasa total", f"{fmt_one_decimal(fat_total_pp_r)}", "g") + [(", ", False)]
 
 # Grasa saturada
-if "Grasa saturada" in selected_macros:
-    tokens_pp += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_pp_r)}", "g") + [(", ", False)]
+    if "Grasa saturada" in selected_macros:
+        tokens_pp += tokens_item("Grasa saturada", f"{fmt_one_decimal(sat_fat_pp_r)}", "g") + [(", ", False)]
 
 # Grasas trans
-if "Grasas trans" in selected_macros:
-    tokens_pp += tokens_item("Grasas trans", f"{fmt_int(trans_fat_pp_mg_r)}", "mg") + [(", ", False)]
+    if "Grasas trans" in selected_macros:
+        tokens_pp += tokens_item("Grasas trans", f"{fmt_int(trans_fat_pp_mg_r)}", "mg") + [(", ", False)]
 
 # Carbohidratos
-if "Carbohidratos totales" in selected_macros:
-    tokens_pp += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_pp_r)}", "g") + [(", ", False)]
+    if "Carbohidratos totales" in selected_macros:
+        tokens_pp += tokens_item("Carbohidratos totales", f"{fmt_carbs_rule(carb_pp_r)}", "g") + [(", ", False)]
 
 # Fibra
-if "Fibra dietaria" in selected_macros:
-    tokens_pp += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_pp_r)}", "g") + [(", ", False)]
+    if "Fibra dietaria" in selected_macros:
+        tokens_pp += tokens_item("Fibra dietaria", f"{fmt_one_decimal(fiber_pp_r)}", "g") + [(", ", False)]
 
 # Polialcoholes
-if include_poly:
-    tokens_pp += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_pp_r)}", "g") + [(", ", False)]
+    if include_poly:
+        tokens_pp += tokens_item("Polialcoholes", f"{fmt_one_decimal(poly_pp_r)}", "g") + [(", ", False)]
 
 # Azúcares totales
-if "Azúcares totales" in selected_macros:
-    tokens_pp += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_pp_r)}", "g") + [(", ", False)]
+    if "Azúcares totales" in selected_macros:
+        tokens_pp += tokens_item("Azúcares totales", f"{fmt_one_decimal(sug_total_pp_r)}", "g") + [(", ", False)]
 
 # Azúcares añadidos
-if "Azúcares añadidos" in selected_macros:
-    tokens_pp += tokens_item("Azúcares añadidos", f"{fmt_one_decimal(sug_added_pp_r)}", "g", bold=True) + [(", ", False)]
+    if "Azúcares añadidos" in selected_macros:
+        tokens_pp += tokens_item("Azúcares añadidos", f"{fmt_one_decimal(sug_added_pp_r)}", "g", bold=True) + [(", ", False)]
 
 # Proteína
-if "Proteína" in selected_macros:
-    tokens_pp += tokens_item("Proteína", f"{fmt_one_decimal(protein_pp_r)}", "g") + [(", ", False)]
+    if "Proteína" in selected_macros:
+        tokens_pp += tokens_item("Proteína", f"{fmt_one_decimal(protein_pp_r)}", "g") + [(", ", False)]
 
 # Sodio
-if "Sodio" in selected_macros:
-    tokens_pp += tokens_item("Sodio", f"{fmt_int(sodium_pp_mg_r)}", "mg", bold=True) + [(", ", False)]
+    if "Sodio" in selected_macros:
+        tokens_pp += tokens_item("Sodio", f"{fmt_int(sodium_pp_mg_r)}", "mg", bold=True) + [(", ", False)]
 
     # Micronutrientes obligatorios POR PORCIÓN
     for name in ["Vitamina A", "Vitamina D", "Hierro", "Calcio", "Zinc"]:
@@ -1299,10 +1299,6 @@ if "Sodio" in selected_macros:
                 (f"{name} {fmt_micro_value(name, unit, value)}", False),
                 (", ", False)
             ]
-
-    for i, mt in enumerate(micro_pp_texts):
-        tokens_pp += [(mt, False)]
-        tokens_pp += [(", ", False)] if i < len(micro_pp_texts)-1 else [(".", False)]
 
     y = draw_rich_wrapped_text(
     d,
