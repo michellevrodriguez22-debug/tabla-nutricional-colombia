@@ -60,8 +60,23 @@ def portion_from_per100(value_per100, portion_size):
     return 0.0
 
 def round_kcal(v):
-    if v < 5: return 0
-    return int(round(v))
+    """
+    Tabla 2 – Cantidades no significativas (Res. 810/2021)
+    Calorías:
+    ≤ 4 kcal → 0
+    > 4 kcal → se declara el valor REAL (sin aproximar)
+    """
+    try:
+        v = float(v)
+    except Exception:
+        return 0
+
+    if v <= 4:
+        return 0
+
+    # No aproximar, no redondear
+    return v
+
 
 def round_g(v):
     av = abs(v)
@@ -922,8 +937,15 @@ def draw_fig1():
     y_header_bottom = BORDER_W + header_h
     draw_hline(d, BORDER_W, W-BORDER_W, y_header_bottom, TEXT_COLOR, GRID_W_THICK)
 
-    kcal_100_txt = f"{fmt_int(kcal_100)}"
-    kcal_pp_txt  = f"{fmt_int(kcal_pp)}"
+
+def fmt_kcal(v):
+    if v == 0:
+        return "0"
+        return f"{v:.1f}".rstrip("0").rstrip(".")
+
+kcal_100_txt = fmt_kcal(kcal_100)
+kcal_pp_txt  = fmt_kcal(kcal_pp)
+
     y = draw_calories_combined_row(d, W, y_header_bottom+1, col_x, kcal_100_txt, kcal_pp_txt)
 
     draw_hline(d, BORDER_W, W-BORDER_W, y, TEXT_COLOR, GRID_W_THICK)
