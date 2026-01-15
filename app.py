@@ -74,6 +74,8 @@ def round_kcal(v):
     if v <= 4:
         return 0
 
+    return v   
+
 def fmt_kcal(v):
     if v == 0:
         return "0"
