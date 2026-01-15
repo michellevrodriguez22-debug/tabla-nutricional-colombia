@@ -1294,7 +1294,6 @@ def draw_fig5():
                 else "mg"
             )
             value = vm_pp.get((name, unit), 0)
-            
             tokens_pp += [
                 (f"{name} {fmt_micro_value(name, unit, value)}", False),
                 (", ", False)
@@ -1302,24 +1301,13 @@ def draw_fig5():
     # 👉 Quitar coma final si existe antes de cerrar con punto
     if tokens_pp and tokens_pp[-1] == (", ", False):
         tokens_pp.pop()
-
-    # 👉 Agregar "No es fuente significativa de ..." como nueva frase
+                
     if footnote_text.strip():
         tokens_pp += [
             (". ", False),
             ("No es fuente significativa de ", False),
             (footnote_text.replace("No es fuente significativa de ", ""), False)
         ]
-
-            ]
-    # 👉 Agregar "No es fuente significativa de" inmediatamente después del último micronutriente
-    if footnote_text.strip():
-        tokens_pp += [
-            (". ", False),
-            ("No es fuente significativa de ", False),
-            (footnote_text.replace("No es fuente significativa de ", ""), False)
-        ]
-
 
     y = draw_rich_wrapped_text(
     d,
