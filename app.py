@@ -1280,7 +1280,12 @@ tokens_pp += [
 ]
 
 # Calorías
-    tokens_pp += tokens_item("Calorías", fmt_kcal(kcal_pp), "kcal", emph=True) + [(", ", False)]
+    tokens_pp += tokens_item(
+        "Calorías",
+        fmt_kcal(kcal_pp),
+        "kcal",
+        emph=True
+    ) + [(", ", False)]
     
 # Grasa total
     if "Grasa total" in selected_macros:
