@@ -1297,6 +1297,7 @@ def draw_fig5():
             tokens_pp += [
                 (f"{name} {fmt_micro_value(name, unit, value)}", False),
                 (", ", False)
+            ]
                 
     # 👉 Quitar coma final si existe antes de cerrar con punto
     if tokens_pp and tokens_pp[-1] == (", ", False):
