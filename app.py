@@ -876,7 +876,13 @@ def draw_rich_wrapped_text(d, x, y, tokens, font_reg, font_bold, max_w, line_gap
     for i, line in enumerate(lines):
         cx = first_line_x if (i == 0 and first_line_x is not None) else x
         for t, b in line:
-            f = font_bold if b else font_reg
+            if b == "emph":
+                f = FONT_SMALL_EMPH_B      # negrilla + 1.3x
+            elif b == "bold":
+                f = FONT_SMALL_B           # negrilla normal
+            else:
+                f = FONT_SMALL             # texto normal
+
             d.text((cx, y), t, fill=TEXT_COLOR, font=f)
             w, _ = measure_text(d, t, f)
             cx += w
