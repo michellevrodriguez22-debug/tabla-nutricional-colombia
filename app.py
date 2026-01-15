@@ -1302,9 +1302,11 @@ def draw_fig5():
     # 👉 Agregar "No es fuente significativa de" inmediatamente después del último micronutriente
     if footnote_text.strip():
         tokens_pp += [
+            (". ", False),
             ("No es fuente significativa de ", False),
             (footnote_text.replace("No es fuente significativa de ", ""), False)
         ]
+
 
     y = draw_rich_wrapped_text(
     d,
