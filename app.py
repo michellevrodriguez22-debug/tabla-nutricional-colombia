@@ -1299,6 +1299,12 @@ def draw_fig5():
                 (f"{name} {fmt_micro_value(name, unit, value)}", False),
                 (", ", False)
             ]
+    # 👉 Agregar "No es fuente significativa de" inmediatamente después del último micronutriente
+    if footnote_text.strip():
+        tokens_pp += [
+            ("No es fuente significativa de ", False),
+            (footnote_text.replace("No es fuente significativa de ", ""), False)
+        ]
 
     y = draw_rich_wrapped_text(
     d,
@@ -1311,17 +1317,6 @@ def draw_fig5():
     line_gap=4,
     first_line_x=x_content_pp
 )
-
-
-    # Pie multilínea (regular)
-    if footnote_text.strip():
-        base_text = footnote_text.strip().rstrip('.')
-        words = base_text.split(" ")
-        foot_tokens = []
-        for i, w in enumerate(words):
-            foot_tokens.append((w + (" " if i < len(words)-1 else ""), False))
-        y += line_space
-        y = draw_rich_wrapped_text(d, x, y, foot_tokens, FONT_SMALL, FONT_SMALL_B, max_line_width, line_gap=4)
         
     H_final = int(y + BORDER_W + 10)
     img = img.crop((0, 0, W, H_final))
