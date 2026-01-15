@@ -1264,28 +1264,23 @@ def draw_fig5():
 
     tokens_pp = []
     
-tokens_pp += [
-    ("Tamaño de porción:", "bold"),
-    (" ", False),
-    (f"{household_name} ({int(round(portion_size))} {portion_unit})", False),
-    (", ", False)
-]
+    tokens_pp += [
+        ("Tamaño de porción:", True),
+        (" ", False),
+        (f"{household_name} ({int(round(portion_size))} {portion_unit})", False),
+        (", ", False)
+    ]
 
 # Número de porciones por envase
-tokens_pp += [
-    ("Número de porciones por envase:", "bold"),
-    (" ", False),
-    (servings_display, False),
-    (", ", False)
-]
+    tokens_pp += [
+        ("Número de porciones por envase:", True),
+        (" ", False),
+        (servings_display, False),
+        (", ", False)
+    ]
 
 # Calorías
-    tokens_pp += tokens_item(
-        "Calorías",
-        fmt_kcal(kcal_pp),
-        "kcal",
-        emph=True
-    ) + [(", ", False)]
+    tokens_pp += tokens_item("Calorías", fmt_kcal(kcal_pp), "kcal", emph=True) + [(", ", False)]
     
 # Grasa total
     if "Grasa total" in selected_macros:
